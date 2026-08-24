@@ -6,7 +6,7 @@ import ThreatRadar from './components/ThreatRadar';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Base API URL
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = '/api';
 
 function App() {
   const [text, setText] = useState('');

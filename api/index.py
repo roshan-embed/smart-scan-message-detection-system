@@ -1,5 +1,8 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
 
@@ -42,10 +45,6 @@ def api_analyze_url(req: UrlAnalyzeRequest):
 @app.get("/api/scenarios")
 def api_get_scenarios():
     return get_scenarios()
-
-@app.get("/api/health")
-def api_health():
-    return {"status": "ok"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
