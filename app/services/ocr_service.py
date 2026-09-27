@@ -1,8 +1,20 @@
 import os
 import re
-import cv2
-import numpy as np
-from PIL import Image
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 class OCRService:
     """
@@ -46,13 +58,16 @@ class OCRService:
         return ext in cls.ALLOWED_EXTENSIONS
 
     @classmethod
-    def preprocess_image(cls, image_path: str) -> np.ndarray:
+    def preprocess_image(cls, image_path: str):
         """
         Preprocesses an image using OpenCV to optimize text recognition accuracy:
         - Converts to Grayscale
         - Denoises with GaussianBlur
         - Enhances contrast using Otsu's thresholding
         """
+        if cv2 is None or np is None:
+            return None
+
         img = cv2.imread(image_path)
         if img is None:
             raise ValueError("Unable to read image file for OCR processing.")
@@ -104,27 +119,30 @@ class OCRService:
 
         # 2. Try pytesseract if installed
         try:
-            import pytesseract
-            # Test if tesseract is accessible
-            extracted = pytesseract.image_to_string(Image.open(image_path))
-            if extracted and extracted.strip():
-                cleaned = extracted.strip()
-                return {
-                    "success": True,
-                    "extracted_text": cleaned,
-                    "confidence": 92.0,
-                    "engine": "Tesseract OCR",
-                    "word_count": len(cleaned.split()),
-                    "char_count": len(cleaned),
-                    "is_sample": False
-                }
+            if Image is not None:
+                import pytesseract
+                # Test if tesseract is accessible
+                extracted = pytesseract.image_to_string(Image.open(image_path))
+                if extracted and extracted.strip():
+                    cleaned = extracted.strip()
+                    return {
+                        "success": True,
+                        "extracted_text": cleaned,
+                        "confidence": 92.0,
+                        "engine": "Tesseract OCR",
+                        "word_count": len(cleaned.split()),
+                        "char_count": len(cleaned),
+                        "is_sample": False
+                    }
         except Exception:
             pass
 
         # 3. Vision fallback / OpenCV contour character heuristic
         try:
-            with Image.open(image_path) as pil_img:
-                width, height = pil_img.size
+            width, height = 800, 600
+            if Image is not None:
+                with Image.open(image_path) as pil_img:
+                    width, height = pil_img.size
 
             fallback_text = (
                 "Congratulations! You have won Rs 50,000 cash prize!\n"

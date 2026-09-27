@@ -81,12 +81,18 @@ class DatabaseManager:
                 autocommit=False
             )
         else:
+            db_dir = os.path.dirname(os.path.abspath(Config.SQLITE_DB_PATH))
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
             conn = sqlite3.connect(Config.SQLITE_DB_PATH)
             conn.row_factory = sqlite3.Row
             return conn
 
     def _init_sqlite_schema(self):
         """Initializes tables for SQLite if using fallback mode."""
+        db_dir = os.path.dirname(os.path.abspath(Config.SQLITE_DB_PATH))
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         conn = sqlite3.connect(Config.SQLITE_DB_PATH)
         cursor = conn.cursor()
         
