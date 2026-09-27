@@ -1,0 +1,859 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Message Scanner &bull; {{ system_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/checkup.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-info">
+    <h1>Smart Message Scanner</h1>
+    <p>Module 02 &bull; Primary ingestion portal to submit and preprocess SMS, WhatsApp, and Email messages.</p>
+  </div>
+  <div class="page-header-actions">
+    <span class="badge badge-navy">Module 02: Ingestion Gateway</span>
+    <span class="badge badge-safe"><i data-lucide="shield-check"></i> Scanner Ready</span>
+  </div>
+</div>
+
+<!-- Main Scanner Card -->
+<div class="card" style="margin-bottom: 28px;">
+  <div class="card-header">
+    <h2 class="card-header-title">
+      <i data-lucide="scan-text"></i>
+      <span>Message Input Gateway</span>
+    </h2>
+    <span style="font-size: 13px; color: var(--text-secondary);">Select channel format below:</span>
+  </div>
+
+  <form action="{{ url_for('scanner.scan') }}" method="POST" id="scanner_form">
+    <div class="card-body">
+      
+      <!-- Hidden Input for Active Channel -->
+      <input type="hidden" name="message_type" id="message_type_input" value="{{ form_data.message_type if form_data else 'sms' }}">
+
+      <!-- Channel Switcher Tabs -->
+      <div class="channel-tabs" role="tablist">
+        <button 
+          type="button" 
+          class="channel-tab-btn {% if not form_data or form_data.message_type == 'sms' %}active{% endif %}" 
+          data-channel="sms"
+          role="tab"
+        >
+          <i data-lucide="smartphone"></i>
+          <span>SMS Message</span>
+        </button>
+
+        <button 
+          type="button" 
+          class="channel-tab-btn {% if form_data and form_data.message_type == 'whatsapp' %}active{% endif %}" 
+          data-channel="whatsapp"
+          role="tab"
+        >
+          <i data-lucide="message-circle"></i>
+          <span>WhatsApp Message</span>
+        </button>
+
+        <button 
+          type="button" 
+          class="channel-tab-btn {% if form_data and form_data.message_type == 'email' %}active{% endif %}" 
+          data-channel="email"
+          role="tab"
+        >
+          <i data-lucide="mail"></i>
+          <span>Email Message</span>
+        </button>
+      </div>
+
+      <!-- Quick Sample Loader Bar -->
+      <div class="sample-bar">
+        <span>Need test data to evaluate? Click to load a typical scam pattern:</span>
+        <button type="button" class="sample-btn" id="btn_load_sample">
+          <i data-lucide="sparkles"></i>
+          <span>Load Sample Scam</span>
+        </button>
+      </div>
+
+      <!-- Sender Info Field (Contextual) -->
+      <div class="form-group" id="sender_field_container">
+        <label for="sender_info_input" class="form-label" id="sender_info_label">
+          {% if form_data and form_data.message_type == 'email' %}
+            Sender Email Address
+          {% elif form_data and form_data.message_type == 'whatsapp' %}
+            Sender Contact / Phone Number
+          {% else %}
+            Sender ID or Number
+          {% endif %}
+        </label>
+        <input 
+          type="text" 
+          id="sender_info_input" 
+          name="sender_info" 
+          class="form-control" 
+          placeholder="e.g. +1 (800) 555-0199 or AX-HDFCBK" 
+          value="{{ form_data.sender_info if form_data else '' }}"
+        >
+      </div>
+
+      <!-- Subject Line (Email Only) -->
+      <div class="form-group" id="email_subject_container" style="display: {% if form_data and form_data.message_type == 'email' %}block{% else %}none{% endif %};">
+        <label for="subject_input" class="form-label">Email Subject Line</label>
+        <input 
+          type="text" 
+          id="subject_input" 
+          name="subject" 
+          class="form-control" 
+          placeholder="e.g. ACTION REQUIRED: Unusual sign-in attempt detected" 
+          value="{{ form_data.subject if form_data else '' }}"
+        >
+      </div>
+
+      <!-- Primary Textarea -->
+      <div class="form-group" style="margin-bottom: 8px;">
+        <label for="message_content_input" class="form-label">
+          Message Content <span class="required">*</span>
+        </label>
+        <div class="scanner-textarea-wrapper">
+          <textarea 
+            id="message_content_input" 
+            name="content" 
+            class="scanner-textarea" 
+            placeholder="Paste your message here..." 
+            required
+          >{{ form_data.content if form_data else '' }}</textarea>
+        </div>
+      </div>
+
+      <!-- Real-time Live Counters Bar -->
+      <div class="counter-bar">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <div class="counter-stat">
+            <span>Characters:</span>
+            <strong id="counter_char_count">0</strong>
+            <span style="color: var(--text-muted);">/ 10,000</span>
+          </div>
+          <div class="counter-stat">
+            <span>Words:</span>
+            <strong id="counter_word_count">0</strong>
+          </div>
+          <div class="counter-stat" id="sms_segments_container">
+            <span>SMS Segments:</span>
+            <strong id="counter_sms_segments">0</strong>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 11px; color: var(--text-muted);">Buffer:</span>
+          <div class="counter-progress-box">
+            <div class="counter-progress-fill" id="counter_progress_fill"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scanner Action Buttons -->
+    <div class="card-footer">
+      <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+        <button type="button" class="btn btn-secondary" id="btn_clear_message">
+          <i data-lucide="rotate-ccw"></i>
+          <span>Clear Message</span>
+        </button>
+
+        <button type="submit" class="btn btn-primary" id="btn_scan_message">
+          <i data-lucide="shield-alert"></i>
+          <span>Analyze Message</span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- ===================================================================
+     MOCKUP ANALYSIS RESULT SECTION (Bottom-Left Screen Design)
+     =================================================================== -->
+{% if scan_result %}
+<div style="margin-bottom: 24px;">
+  <!-- Section Title matching Module 6 -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <span class="badge badge-navy" style="font-size: 12px; font-weight: 700; letter-spacing: 0.5px;">
+      <i data-lucide="shield"></i> RISK ASSESSMENT &amp; THREAT SCORING 📊
+    </span>
+    <span style="font-size: 12px; color: var(--text-secondary);">Ensemble: Heuristic Rule Engine (20%) + Local DistilBERT (80%)</span>
+  </div>
+
+  <!-- 1. Hero Risk Banner matching Mockup -->
+  <div class="result-hero-box {% if scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'HIGH RISK' %}high-risk{% elif scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'SUSPICIOUS' %}suspicious{% else %}safe{% endif %}">
+    <div class="result-hero-left">
+      <div class="result-hero-icon-round {% if scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'HIGH RISK' %}danger{% elif scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'SUSPICIOUS' %}warning{% else %}safe{% endif %}">
+        {% if scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'HIGH RISK' %}
+          <i data-lucide="alert-octagon"></i>
+        {% elif scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'SUSPICIOUS' %}
+          <i data-lucide="alert-triangle"></i>
+        {% else %}
+          <i data-lucide="check-circle-2"></i>
+        {% endif %}
+      </div>
+
+      <div>
+        <div class="result-hero-title {% if scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'HIGH RISK' %}danger{% elif scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'SUSPICIOUS' %}warning{% else %}safe{% endif %}">
+          {{ scan_result.risk_assessment.risk_level if scan_result.risk_assessment else 'ANALYSIS COMPLETE' }}
+        </div>
+        <div class="result-hero-sub">
+          {% if scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'HIGH RISK' %}
+            This message is likely a scam.
+          {% elif scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'SUSPICIOUS' %}
+            This message contains suspicious indicators. Exercise caution.
+          {% else %}
+            This message appears to be safe and legitimate.
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Circular Radial Score Badge (Mockup: 87 / Risk Score) -->
+    <div class="radial-score-badge {% if scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'HIGH RISK' %}danger{% elif scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'SUSPICIOUS' %}warning{% else %}safe{% endif %}">
+      <div class="radial-score-val">{{ scan_result.risk_assessment.final_risk_score if scan_result.risk_assessment else '87' }}</div>
+      <div class="radial-score-denom">/ 100</div>
+      <div class="radial-score-sub">Risk Score</div>
+    </div>
+  </div>
+
+  <!-- Contributing Factors Section (Module 6 Specification) -->
+  {% if scan_result.risk_assessment and scan_result.risk_assessment.contributing_factors %}
+  <div style="background-color: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: 18px 24px; margin-bottom: 20px; box-shadow: var(--shadow-card);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">
+        <i data-lucide="layers" style="color: var(--primary-teal); width: 15px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 6px;"></i>
+        Main Contributing Factors
+      </div>
+      <span style="font-size: 11px; color: var(--text-secondary);">Module 6: Detection Pipeline Inputs</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+      {% for cf in scan_result.risk_assessment.contributing_factors %}
+      <div style="background: {% if cf.triggered %}#FEF2F2{% else %}#F8FAFC{% endif %}; border: 1px solid {% if cf.triggered %}#FECACA{% else %}#E2E8F0{% endif %}; border-radius: 8px; padding: 10px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+          <span style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary);">{{ cf.factor }}</span>
+          <i data-lucide="{{ cf.icon }}" style="width: 13px; height: 13px; color: {% if cf.triggered %}#EF4444{% else %}#10B981{% endif %};"></i>
+        </div>
+        <div style="font-size: 15px; font-weight: 800; color: {% if cf.triggered %}#DC2626{% else %}#15803D{% endif %};">
+          {{ cf.value }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 2. Detected Indicators Pills Section -->
+  <div style="background-color: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: 20px 24px; margin-bottom: 22px; box-shadow: var(--shadow-card);">
+    <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+      Detected Indicators
+    </div>
+
+    <div class="indicator-pills-row">
+      {% if scan_result.indicator_report and scan_result.indicator_report.indicators %}
+        {% for factor in scan_result.indicator_report.indicators %}
+        <div class="indicator-pill {% if factor.severity != 'critical' %}warning-pill{% endif %}">
+          <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i>
+          <span>{{ factor.label }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="badge badge-safe" style="font-size: 12px; padding: 6px 14px;">
+          <i data-lucide="check"></i>
+          <span>No malicious warning signs detected</span>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 3. Side-by-Side Dual Engine Cards (AI Analysis & Rule Engine Score) -->
+  <div class="dual-engine-grid">
+    <!-- AI Analysis Card -->
+    <div class="engine-card">
+      <div class="engine-icon-box ai">
+        <i data-lucide="cpu"></i>
+      </div>
+      <div class="engine-info">
+        <span class="engine-title">AI Analysis</span>
+        <span style="font-size: 11.5px; color: var(--text-secondary); margin-top: 1px;">Scam Probability</span>
+        <span class="engine-score-val" style="color: {% if scan_result.ai_analysis and scan_result.ai_analysis.prediction == 'SCAM' %}var(--danger){% else %}var(--safe){% endif %};">
+          {{ scan_result.ai_analysis.confidence_score if scan_result.ai_analysis else 94 }}%
+        </span>
+        <span class="engine-subtext">(Local DistilBERT Model)</span>
+      </div>
+    </div>
+
+    <!-- Rule Engine Score Card -->
+    <div class="engine-card">
+      <div class="engine-icon-box rule">
+        <i data-lucide="settings"></i>
+      </div>
+      <div class="engine-info">
+        <span class="engine-title">Rule Engine Score</span>
+        <span style="font-size: 11.5px; color: var(--text-secondary); margin-top: 1px;">Heuristic Signature Score</span>
+        <span class="engine-score-val" style="color: var(--primary-teal);">
+          {{ scan_result.risk_assessment.rule_based_score if scan_result.risk_assessment else 70 }} / 100
+        </span>
+        <span class="engine-subtext">(Based on detected patterns)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Why was this flagged? Box -->
+  <div class="info-narrative-card">
+    <div class="info-narrative-header">
+      <i data-lucide="lightbulb" style="color: #F59E0B; width: 18px; height: 18px;"></i>
+      <span>Why was this flagged?</span>
+    </div>
+    <p class="info-narrative-body">
+      {% if scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'HIGH RISK' %}
+        This message contains multiple scam indicators such as {% if scan_result.indicator_report and scan_result.indicator_report.indicators %}{{ scan_result.indicator_report.indicators | map(attribute='label') | join(', ') | lower }}{% else %}coercive psychological urgency and deceptive links{% endif %}, which strongly match confirmed fraud patterns.
+      {% elif scan_result.risk_assessment and scan_result.risk_assessment.risk_level == 'SUSPICIOUS' %}
+        This message triggered warning signs such as unverified external references or financial terminology requiring manual verification before proceeding.
+      {% else %}
+        This message exhibits benign conversational and business language characteristics with zero deceptive links or fraud signatures.
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- 5. Recommended Actions Box -->
+  <div class="action-checklist-card">
+    <div class="action-checklist-header">
+      <i data-lucide="shield-check" style="color: var(--safe); width: 18px; height: 18px;"></i>
+      <span>Recommended Actions</span>
+    </div>
+
+    <ul class="action-checklist-items">
+      {% if scan_result.risk_assessment and scan_result.risk_assessment.recommendations %}
+        {% for rec in scan_result.risk_assessment.recommendations %}
+        <li class="action-checklist-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>{{ rec }}</span>
+        </li>
+        {% endfor %}
+      {% else %}
+        <li class="action-checklist-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>Do not click the link.</span>
+        </li>
+        <li class="action-checklist-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>Do not share your OTP or personal information.</span>
+        </li>
+        <li class="action-checklist-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>Verify the sender through official channels.</span>
+        </li>
+        <li class="action-checklist-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>Report the message if you believe it's a scam.</span>
+        </li>
+      {% endif %}
+    </ul>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODULE 3: MESSAGE SECURITY CHECKUP 🔎
+     =================================================================== -->
+{% if scan_result.checkup %}
+<div class="checkup-card" style="margin-bottom: 28px;">
+  <div class="checkup-header">
+    <div class="checkup-title">
+      <span style="font-size: 18px;">🔎</span>
+      <span>{{ scan_result.checkup.summary_title }}</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span style="font-size: 12px; color: var(--text-secondary);">Message Category:</span>
+      <span class="badge badge-navy" style="font-weight: 700;">{{ scan_result.checkup.message_category }}</span>
+      <a href="{{ url_for('checkup.index') }}" class="btn btn-secondary btn-sm" style="margin-left: 8px;">
+        <span>Checkup Studio</span>
+        <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
+      </a>
+    </div>
+  </div>
+
+  <div class="checkup-grid">
+
+    <!-- 1. Link Found Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">🔗</div>
+        <div>
+          <div class="checkup-label">Link Found</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.link_check.detected %}
+              Detected: <code>{{ scan_result.checkup.link_check.detected_items | join(', ') }}</code>
+              {% if scan_result.checkup.link_check.reasons %}
+                &bull; <span style="color: var(--danger);">{{ scan_result.checkup.link_check.reasons | join('; ') }}</span>
+              {% endif %}
+            {% else %}
+              No web links or URLs found in message
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.link_check.is_suspicious %}
+          <span class="checkup-status-tag suspicious">
+            <span>⚠</span> Suspicious
+          </span>
+        {% elif scan_result.checkup.link_check.detected %}
+          <span class="checkup-status-tag warning">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 2. Banking Content Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">🏦</div>
+        <div>
+          <div class="checkup-label">Banking Content</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.banking_check.detected %}
+              Institutions / keywords: <strong>{{ scan_result.checkup.banking_check.details | join(', ') }}</strong>
+            {% else %}
+              No banking or financial account references found
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.banking_check.detected %}
+          <span class="checkup-status-tag detected">
+            <span>✓</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> Not Detected
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 3. KYC Request Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">📄</div>
+        <div>
+          <div class="checkup-label">KYC Request</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.kyc_check.detected %}
+              Triggers: <span style="color: var(--danger); font-weight: 600;">"{{ scan_result.checkup.kyc_check.details | join(', ') }}"</span>
+            {% else %}
+              No KYC or account re-verification solicitations
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.kyc_check.detected %}
+          <span class="checkup-status-tag suspicious">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> Not Detected
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 4. Sensitive Information Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">🔐</div>
+        <div>
+          <div class="checkup-label">Sensitive Information</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.sensitive_info_check.detected %}
+              Requested: <span style="color: var(--danger); font-weight: 600;">"{{ scan_result.checkup.sensitive_info_check.details | join(', ') }}"</span>
+            {% else %}
+              No requests for credentials, OTPs, PINs, or passwords detected
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.sensitive_info_check.detected %}
+          <span class="checkup-status-tag suspicious">
+            <span>⚠</span> Requested
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Detected
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 5. Urgency Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">⚡</div>
+        <div>
+          <div class="checkup-label">Urgency</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.urgency_check.detected %}
+              Panic/threat keywords: <span style="color: var(--warning-text); font-weight: 600;">"{{ scan_result.checkup.urgency_check.details | join(', ') }}"</span>
+            {% else %}
+              Message maintains a non-threatening, normal pace
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.urgency_check.detected %}
+          <span class="checkup-status-tag warning">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> Normal Pace
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 6. UPI / Payment Information Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">💳</div>
+        <div>
+          <div class="checkup-label">UPI / Payment Information</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.payment_upi_check.detected %}
+              Payment triggers: <strong>{{ scan_result.checkup.payment_upi_check.details | join(', ') }}</strong>
+            {% else %}
+              No payment requests, money transfers, or UPI handles identified
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.payment_upi_check.detected %}
+          <span class="checkup-status-tag warning">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 7. Phone Numbers -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">📞</div>
+        <div>
+          <div class="checkup-label">Phone Numbers</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.phone_check.detected %}
+              <code>{{ scan_result.checkup.phone_check.detected_items | join(', ') }}</code>
+            {% else %}
+              No telephone numbers found
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.phone_check.detected %}
+          <span class="checkup-status-tag detected">
+            <span>✓</span> Identified
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 8. Email Addresses -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">✉</div>
+        <div>
+          <div class="checkup-label">Email Addresses</div>
+          <div class="checkup-subtext">
+            {% if scan_result.checkup.email_check.detected %}
+              <code>{{ scan_result.checkup.email_check.detected_items | join(', ') }}</code>
+            {% else %}
+              No email addresses found
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if scan_result.checkup.email_check.detected %}
+          <span class="checkup-status-tag detected">
+            <span>✓</span> Identified
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endif %}
+
+<!-- ===================================================================
+     MODULE 4: SCAM INDICATOR REPORT 🚨
+     =================================================================== -->
+{% if scan_result.indicator_report %}
+<div class="indicators-card {% if scan_result.indicator_report.critical_count >= 1 %}high-risk{% elif scan_result.indicator_report.warning_count >= 1 %}suspicious-risk{% endif %}" style="margin-bottom: 28px;">
+  
+  <div class="indicators-header">
+    <div class="indicators-title">
+      <span style="font-size: 18px;">🚨</span>
+      <span>{{ scan_result.indicator_report.title }}</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span class="badge {{ scan_result.indicator_report.verdict_badge }}" style="font-size: 13px; font-weight: 700; padding: 5px 12px;">
+        <i data-lucide="{{ scan_result.indicator_report.verdict_icon }}"></i>
+        <span>{{ scan_result.indicator_report.overall_verdict }}</span>
+      </span>
+      <a href="{{ url_for('indicators.index') }}" class="btn btn-secondary btn-sm">
+        <span>Indicator Studio</span>
+        <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
+      </a>
+    </div>
+  </div>
+
+  <div class="indicators-list">
+    {% for ind in scan_result.indicator_report.indicators %}
+    <div class="indicator-item-badge">
+      <div style="display: flex; flex-direction: column; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div class="indicator-badge-label">
+            <span class="indicator-dot">{{ ind.icon }}</span>
+            <span>{{ ind.label }}</span>
+          </div>
+          <span class="badge {{ ind.color_class }}" style="font-size: 11px; font-weight: 700;">
+            {{ ind.severity | upper }}
+          </span>
+        </div>
+        <div class="indicator-desc">
+          {{ ind.detail }}
+          {% if ind.evidence %}
+            <span style="color: var(--primary-navy); font-weight: 600;"> &bull; Triggered by: </span>
+            <code>{{ ind.evidence | join(', ') }}</code>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div style="padding: 20px; text-align: center; color: var(--safe);">
+      <i data-lucide="shield-check" style="width: 28px; height: 28px; margin-bottom: 6px;"></i>
+      <div style="font-weight: 700;">No warning signs detected</div>
+      <div style="font-size: 12px; color: var(--text-secondary);">Message text contains no known scam indicators.</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="indicators-footer-count">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      {% if scan_result.indicator_report.warning_count > 0 %}
+        <span style="font-size: 16px;">⚠️</span>
+      {% else %}
+        <span style="font-size: 16px; color: var(--safe);">✓</span>
+      {% endif %}
+      <span style="font-size: 15px; font-weight: 800; color: {% if scan_result.indicator_report.warning_count > 0 %}var(--danger){% else %}var(--safe){% endif %};">
+        {{ scan_result.indicator_report.warning_count_text }}
+      </span>
+    </div>
+    <div style="font-size: 12px; color: var(--text-secondary);">
+      Critical (🔴): <strong>{{ scan_result.indicator_report.critical_count }}</strong> &bull; Moderate (🟠): <strong>{{ scan_result.indicator_report.warning_count - scan_result.indicator_report.critical_count }}</strong>
+    </div>
+  </div>
+
+</div>
+{% endif %}
+
+<!-- ===================================================================
+     MODULE 5: AI SCAM CLASSIFICATION (LOCAL DISTILBERT) 🤖
+     =================================================================== -->
+{% if scan_result.ai_analysis %}
+<div class="ai-card {% if scan_result.ai_analysis.prediction == 'SCAM' %}scam-predicted{% else %}safe-predicted{% endif %}" style="margin-bottom: 28px;">
+  <div class="ai-header">
+    <div class="ai-title">
+      <span style="font-size: 18px;">🤖</span>
+      <span>{{ scan_result.ai_analysis.title }}</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span class="badge badge-navy">Model: {{ scan_result.ai_analysis.model_name }}</span>
+      <span class="badge badge-safe"><i data-lucide="zap"></i> {{ scan_result.ai_analysis.latency_ms }} ms</span>
+      <a href="{{ url_for('ai.index') }}" class="btn btn-secondary btn-sm" style="margin-left: 8px;">
+        <span>AI Studio</span>
+        <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
+      </a>
+    </div>
+  </div>
+
+  <div class="ai-body">
+    <!-- Prediction Row -->
+    <div class="ai-prediction-row">
+      <span class="ai-prediction-label">Prediction:</span>
+      <span class="ai-prediction-value {% if scan_result.ai_analysis.prediction == 'SCAM' %}scam{% else %}safe{% endif %}">
+        {{ scan_result.ai_analysis.prediction }}
+      </span>
+      <span class="badge {{ scan_result.ai_analysis.prediction_class }}" style="font-size: 12px; margin-left: 8px;">
+        {% if scan_result.ai_analysis.prediction == 'SCAM' %}
+          <i data-lucide="alert-octagon"></i> High Threat Detected
+        {% else %}
+          <i data-lucide="check-circle-2"></i> Benign Content
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- Confidence Section with ASCII bar -->
+    <div class="ai-confidence-box">
+      <div class="ai-confidence-label">Confidence</div>
+      <div class="ai-ascii-bar">{{ scan_result.ai_analysis.confidence_bar }}</div>
+      
+      <div class="ai-visual-progress">
+        <div 
+          class="ai-visual-fill {% if scan_result.ai_analysis.prediction == 'SCAM' %}scam{% else %}safe{% endif %}" 
+          style="width: {{ scan_result.ai_analysis.confidence_score }}%;"
+        ></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+        <span>Scale: 0% (Low Certainty)</span>
+        <span>Posterior Probability: <strong>{{ scan_result.ai_analysis.probabilities.scam if scan_result.ai_analysis.prediction == 'SCAM' else scan_result.ai_analysis.probabilities.safe }}</strong></span>
+        <span>100% (High Certainty)</span>
+      </div>
+    </div>
+
+    <!-- Model Attribution Section -->
+    <div class="ai-meta-row">
+      <div class="ai-meta-item">
+        <span class="ai-meta-label">Model:</span>
+        <span class="ai-meta-val">{{ scan_result.ai_analysis.model_name }}</span>
+      </div>
+      <div class="ai-meta-item">
+        <span class="ai-meta-label">Architecture:</span>
+        <span class="ai-meta-val">{{ scan_result.ai_analysis.model_architecture | truncate(35) }}</span>
+      </div>
+      <div class="ai-meta-item">
+        <span class="ai-meta-label">Execution:</span>
+        <span class="badge badge-safe" style="font-size: 11px;">100% Offline / Local</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Recent Scam Message History Table (Matching Mockup Screen 4) -->
+<div class="card" style="margin-top: 24px;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px;">
+    <div>
+      <h2 class="card-header-title" style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <i data-lucide="history" style="color: var(--primary-teal);"></i>
+        <span>Recent Scam Scans &amp; History</span>
+      </h2>
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin: 3px 0 0 0;">
+        Recent message scans and real-time detection results
+      </p>
+    </div>
+    <a href="{{ url_for('scanner.history') }}" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 6px;">
+      <span>View All History</span>
+      <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+    </a>
+  </div>
+
+  <div class="card-body" style="padding: 0;">
+    <div class="data-table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 190px;">Date &amp; Time</th>
+            <th>Message Preview</th>
+            <th style="width: 140px;">Result</th>
+            <th style="width: 120px; text-align: center;">Risk Score</th>
+            <th style="width: 110px; text-align: center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in recent_scans %}
+          <tr>
+            <td style="color: var(--text-secondary); font-size: 12.5px; white-space: nowrap;">
+              {{ scan.formatted_date or scan.created_at }}
+            </td>
+            <td>
+              <div style="font-weight: 600; color: var(--text-primary); font-size: 13.5px; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                {{ scan.raw_content or scan.sanitized_content }}
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; font-size: 11.5px; color: var(--text-secondary);">
+                <span>Channel: <strong>{{ scan.message_type | upper }}</strong></span>
+                {% if scan.sender_info %}
+                  <span>&bull; Sender: <code>{{ scan.sender_info }}</code></span>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              <span class="badge {{ scan.status_class or 'badge-danger' }}" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px;">
+                <i data-lucide="{{ scan.status_icon or 'alert-octagon' }}" style="width: 13px; height: 13px;"></i>
+                <span>{{ scan.status_label or 'High Risk' }}</span>
+              </span>
+            </td>
+            <td style="text-align: center;">
+              <span style="font-size: 16px; font-weight: 800; color: {% if scan.parsed_risk_score and scan.parsed_risk_score >= 61 %}#EF4444{% elif scan.parsed_risk_score and scan.parsed_risk_score >= 31 %}#F59E0B{% else %}#10B981{% endif %};">
+                {{ scan.parsed_risk_score or 75 }}
+              </span>
+              <span style="font-size: 11px; color: var(--text-secondary);">/ 100</span>
+            </td>
+            <td style="text-align: center;">
+              <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
+                <a href="{{ url_for('scanner.analysis_detail', msg_id=scan.id) }}" class="btn btn-secondary btn-sm" title="View Full Analysis Result" style="padding: 6px 10px;">
+                  <i data-lucide="eye" style="width: 14px; height: 14px; color: var(--primary-teal);"></i>
+                </a>
+                <form action="{{ url_for('scanner.delete', msg_id=scan.id) }}" method="POST" onsubmit="return confirm('Delete this scan record?');" style="margin: 0;">
+                  <button type="submit" class="btn btn-secondary btn-sm" title="Remove Record" style="padding: 6px 10px; color: #EF4444;">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 32px;">
+              <i data-lucide="inbox" style="width: 32px; height: 32px; margin-bottom: 8px; opacity: 0.5;"></i>
+              <div>No scam messages scanned yet. Paste a message above and click <strong>Scan Message</strong>!</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+{% endblock %}

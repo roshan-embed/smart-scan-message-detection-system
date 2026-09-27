@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard &bull; {{ system_name }}{% endblock %}
+
+{% block content %}
+<!-- 1. Hero Greeting & Security Tip Row -->
+<div class="dashboard-hero-row">
+  <div>
+    <h1 class="dashboard-greeting-title">{{ greeting }}, {{ user.first_name }}</h1>
+    <p class="dashboard-greeting-sub">Stay safe. Scan your messages and avoid online scams.</p>
+  </div>
+
+  <div class="safety-tip-card">
+    <div class="safety-tip-icon">
+      <i data-lucide="shield-check"></i>
+    </div>
+    <div>
+      <div class="safety-tip-title">Think Before You Click</div>
+      <div class="safety-tip-desc">Scammers are always one step ahead. Let us help you stay safe.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 4 Stat Metric Cards Grid -->
+<div class="stats-grid">
+  <!-- Total Scanned -->
+  <div class="stat-card">
+    <div class="stat-icon-box total">
+      <i data-lucide="mail"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.total }}</span>
+      <span class="stat-label">Total Messages Scanned</span>
+    </div>
+  </div>
+
+  <!-- Safe Messages -->
+  <div class="stat-card">
+    <div class="stat-icon-box safe">
+      <i data-lucide="shield-check"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.safe }}</span>
+      <span class="stat-label">Safe Messages</span>
+    </div>
+  </div>
+
+  <!-- Suspicious Messages -->
+  <div class="stat-card">
+    <div class="stat-icon-box suspicious">
+      <i data-lucide="alert-triangle"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.suspicious }}</span>
+      <span class="stat-label">Suspicious Messages</span>
+    </div>
+  </div>
+
+  <!-- Scam Messages -->
+  <div class="stat-card">
+    <div class="stat-icon-box scam">
+      <i data-lucide="alert-octagon"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.scam }}</span>
+      <span class="stat-label">Scam Messages</span>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Dashboard Main Grid (Analyze a Message + Common Scams We Detect) -->
+<div class="dashboard-main-grid">
+  <!-- Left: Analyze a Message Form -->
+  <div class="analyze-box-card">
+    <h2 class="analyze-box-title">Analyze a Message</h2>
+    <p class="analyze-box-sub">Paste your message below and we'll check it for common scam indicators.</p>
+
+    <!-- Quick sample preset loader -->
+    <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; align-self: center;">Try Sample:</span>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="loadSampleText('sms')">SMS Bank Scam</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="loadSampleText('whatsapp')">WhatsApp Lottery</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="loadSampleText('benign')">Safe Message</button>
+    </div>
+
+    <form action="{{ url_for('scanner.scan') }}" method="POST">
+      <input type="hidden" name="message_type" id="dash_message_type" value="sms">
+      <input type="hidden" name="sender_info" id="dash_sender_info" value="Quick Scanner">
+
+      <div style="position: relative; margin-bottom: 16px;">
+        <textarea 
+          id="dash_message_content" 
+          name="content" 
+          class="form-control" 
+          rows="6" 
+          maxlength="2000"
+          placeholder="Paste SMS, email or WhatsApp message here..."
+          required
+          oninput="updateDashCounter()"
+        ></textarea>
+        <div style="position: absolute; right: 12px; bottom: 10px; font-size: 11.5px; color: var(--text-muted); background: rgba(255,255,255,0.85); padding: 2px 6px; border-radius: 4px;">
+          <span id="dash_char_count">0</span> / 2000
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn btn-secondary" onclick="clearDashMessage()">
+          <i data-lucide="trash-2"></i>
+          <span>Clear</span>
+        </button>
+
+        <button type="submit" class="btn btn-primary">
+          <i data-lucide="search"></i>
+          <span>Analyze Message</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right: Common Scams We Detect -->
+  <div class="common-scams-card">
+    <div>
+      <div class="common-scams-header">
+        <i data-lucide="shield-alert" style="color: var(--primary-teal);"></i>
+        <span>Common Scams We Detect</span>
+      </div>
+
+      <ul class="common-scams-list">
+        <li class="common-scams-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>Fake bank messages</span>
+        </li>
+        <li class="common-scams-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>Lottery / prize scams</span>
+        </li>
+        <li class="common-scams-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>KYC verification frauds</span>
+        </li>
+        <li class="common-scams-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>UPI / payment requests</span>
+        </li>
+        <li class="common-scams-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>Suspicious links &amp; domains</span>
+        </li>
+        <li class="common-scams-item">
+          <i data-lucide="check-circle-2"></i>
+          <span>OTP and personal data theft</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="safety-banner-bottom">
+      <i data-lucide="check-circle"></i>
+      <span>Your safety is our priority</span>
+    </div>
+  </div>
+</div>
+
+<!-- 4. System Implementation Modules Roadmap (12 Modules) -->
+<div style="background-color: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: 24px; box-shadow: var(--shadow-card);">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <h3 style="font-size: 16px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+        <i data-lucide="boxes" style="color: var(--primary-teal);"></i>
+        <span>Architecture Roadmap &bull; 12 Decoupled Modules</span>
+      </h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+        MVC + 3-Tier Layered Architecture with Local DistilBERT Model (100% Offline)
+      </p>
+    </div>
+    <span class="badge badge-safe">6 of 12 Operational</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+    {% for mod in modules %}
+    <div style="background-color: {% if mod.status == 'active' %}#F8FAFC{% else %}#FFFFFF{% endif %}; border: 1px solid {% if mod.status == 'active' %}#CBD5E1{% else %}#E2E8F0{% endif %}; border-radius: 8px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Module {{ "%02d" % mod.id }}</span>
+        {% if mod.status == 'active' %}
+          <span class="badge badge-safe" style="font-size: 10px; padding: 2px 8px;">Operational</span>
+        {% else %}
+          <span class="badge badge-navy" style="font-size: 10px; padding: 2px 8px; opacity: 0.6;">Planned</span>
+        {% endif %}
+      </div>
+      <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">{{ mod.title }}</h4>
+      <p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.35; margin: 0;">{{ mod.desc | truncate(80) }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const sampleMap = {
+    sms: "URGENT: Your SBI bank account ending in #4092 has been blocked due to incomplete KYC. Verify now within 24 hours at http://sbi-kyc-update.xyz to avoid suspension. Call +91 98765 43210.",
+    whatsapp: "🎉 Congratulations! You have won Rs 25,00,000 in KBC Lucky Draw! Claim your prize money right now by sending registration fee via UPI to kbc-rewards@okhdfcbank.",
+    benign: "Hey Rahul, let's meet for lunch at the office cafeteria around 1pm tomorrow to discuss the project presentation. Thanks!"
+  };
+
+  function loadSampleText(type) {
+    const text = sampleMap[type] || "";
+    const textarea = document.getElementById('dash_message_content');
+    if (textarea) {
+      textarea.value = text;
+      updateDashCounter();
+    }
+  }
+
+  function clearDashMessage() {
+    const textarea = document.getElementById('dash_message_content');
+    if (textarea) {
+      textarea.value = '';
+      updateDashCounter();
+    }
+  }
+
+  function updateDashCounter() {
+    const textarea = document.getElementById('dash_message_content');
+    const counter = document.getElementById('dash_char_count');
+    if (textarea && counter) {
+      counter.textContent = textarea.value.length;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateDashCounter();
+    if (window.lucide) window.lucide.createIcons();
+  });
+</script>
+{% endblock %}

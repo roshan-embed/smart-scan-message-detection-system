@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ system_name }}{% endblock %}</title>
+  
+  <!-- Modern Clean Typography (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Line Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Global Application CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if current_user %}has-sidebar{% else %}auth-layout{% endif %}">
+
+  {% if current_user %}
+  <!-- ===================================================================
+       LEFT DARK SIDEBAR (SMD - Smart Message Detection)
+       =================================================================== -->
+  <aside class="sidebar">
+    <!-- Brand Logo & Title -->
+    <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <i data-lucide="shield-check"></i>
+      </div>
+      <div class="sidebar-brand-text">
+        <span class="sidebar-brand-title">SMD</span>
+        <span class="sidebar-brand-subtitle">Smart Message Detection</span>
+      </div>
+    </a>
+
+    <!-- Navigation Menu Items -->
+    <nav class="sidebar-menu">
+      <a href="{{ url_for('dashboard.index') }}" class="sidebar-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="{{ url_for('scanner.index') }}" class="sidebar-item {% if 'scanner' in request.endpoint and not 'history' in request.endpoint and not 'analysis' in request.endpoint %}active{% endif %}">
+        <i data-lucide="scan-text"></i>
+        <span>Scan Message</span>
+      </a>
+
+      <a href="{{ url_for('ocr.index') }}" class="sidebar-item {% if 'ocr' in request.endpoint %}active{% endif %}">
+        <i data-lucide="image"></i>
+        <span>Screenshot OCR</span>
+      </a>
+
+      <a href="{{ url_for('verification.index') }}" class="sidebar-item {% if 'verification' in request.endpoint %}active{% endif %}">
+        <i data-lucide="link"></i>
+        <span>URL &amp; Sender Check</span>
+      </a>
+
+      <a href="{{ url_for('ai.index') }}" class="sidebar-item {% if 'ai' in request.endpoint %}active{% endif %}">
+        <i data-lucide="cpu"></i>
+        <span>AI Detection</span>
+      </a>
+
+      <a href="{{ url_for('risk.index') }}" class="sidebar-item {% if 'risk' in request.endpoint %}active{% endif %}">
+        <i data-lucide="gauge"></i>
+        <span>Threat Assessment</span>
+      </a>
+
+      <a href="{{ url_for('scanner.history') }}" class="sidebar-item {% if 'history' in request.endpoint or 'analysis' in request.endpoint %}active{% endif %}">
+        <i data-lucide="history"></i>
+        <span>History</span>
+      </a>
+
+      <a href="{{ url_for('analytics.index') }}" class="sidebar-item {% if 'analytics' in request.endpoint %}active{% endif %}">
+        <i data-lucide="bar-chart-3"></i>
+        <span>Analytics</span>
+      </a>
+
+      <a href="{{ url_for('profile.view_profile') }}" class="sidebar-item {% if 'profile' in request.endpoint %}active{% endif %}">
+        <i data-lucide="user"></i>
+        <span>Profile</span>
+      </a>
+    </nav>
+
+    <!-- Sidebar Bottom Logout -->
+    <div class="sidebar-footer">
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-logout" title="Sign out of current session">
+        <i data-lucide="log-out"></i>
+        <span>Logout</span>
+      </a>
+    </div>
+  </aside>
+  {% endif %}
+
+  <!-- ===================================================================
+       MAIN VIEWPORT CONTAINER
+       =================================================================== -->
+  <div class="{% if current_user %}app-main-wrapper{% else %}auth-full-page{% endif %}">
+    {% if current_user %}
+    <!-- Top White Header Bar -->
+    <header class="top-header">
+      <div class="top-header-left">
+        <!-- Optional Breadcrumb or Search -->
+        <span class="top-header-title">SMD Security Portal</span>
+      </div>
+
+      <div class="top-header-right">
+        <!-- Notification Bell -->
+        <button type="button" class="btn-icon-bell" title="System Notifications">
+          <i data-lucide="bell"></i>
+          <span class="bell-ping"></span>
+        </button>
+
+        <!-- User Profile Pill -->
+        <a href="{{ url_for('profile.view_profile') }}" class="user-profile-pill">
+          <div class="user-avatar-circle">
+            {{ current_user.first_name[0] | upper }}{{ current_user.last_name[0] | upper }}
+          </div>
+          <div class="user-profile-text">
+            <span class="user-name">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+            <span class="user-role">{{ current_user.role | capitalize }}</span>
+          </div>
+        </a>
+      </div>
+    </header>
+    {% endif %}
+
+    <!-- Flash Notifications Container -->
+    <div class="flash-wrapper" {% if not current_user %}style="max-width: 480px; width: 100%; margin: 16px auto 0;"{% endif %}>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-container">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                <div class="alert-content">
+                  {% if category == 'success' %}
+                    <i data-lucide="check-circle-2"></i>
+                  {% elif category == 'danger' or category == 'error' %}
+                    <i data-lucide="alert-circle"></i>
+                  {% elif category == 'warning' %}
+                    <i data-lucide="alert-triangle"></i>
+                  {% else %}
+                    <i data-lucide="info"></i>
+                  {% endif %}
+                  <span>{{ message }}</span>
+                </div>
+                <button type="button" class="alert-close" aria-label="Dismiss alert">
+                  <i data-lucide="x"></i>
+                </button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="{% if current_user %}page-content{% else %}auth-page-wrapper{% endif %}">
+      {% block content %}{% endblock %}
+    </main>
+
+    {% if current_user %}
+    <!-- Subtle Enterprise Footer -->
+    <footer class="app-footer">
+      <div>
+        <strong>SMD &bull; Smart Message Detection System</strong> &bull; Local Offline DistilBERT AI + Heuristic Engine
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span class="badge badge-navy">MVC Layered Architecture</span>
+        <span class="badge badge-safe">100% Offline / Local</span>
+      </div>
+    </footer>
+    {% endif %}
+  </div>
+
+  <!-- Global Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

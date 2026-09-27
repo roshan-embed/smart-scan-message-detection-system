@@ -1,0 +1,241 @@
+/* ===================================================================
+   SMART SCAM MESSAGE DETECTION SYSTEM
+   Authentication Module Styles (Login & Registration)
+=================================================================== */
+
+body.auth-layout {
+  min-height: 100vh;
+  background-color: var(--bg-canvas);
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-full-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 16px;
+  width: 100%;
+}
+
+.auth-page-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.auth-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.auth-card {
+  background-color: var(--card-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 16px rgba(23, 43, 77, 0.05);
+  padding: 36px 32px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: var(--primary-navy);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  color: #FFFFFF;
+}
+
+.auth-brand-badge svg {
+  width: 24px;
+  height: 24px;
+  stroke: #FFFFFF;
+  stroke-width: 2;
+  fill: none;
+}
+
+.auth-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.auth-form {
+  margin-top: 20px;
+}
+
+.auth-checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+.custom-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-action);
+  cursor: pointer;
+}
+
+/* Password Strength Indicator */
+.password-meter-container {
+  margin-top: 8px;
+}
+
+.password-meter-bars {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+  margin-bottom: 6px;
+}
+
+.meter-bar {
+  flex: 1;
+  height: 100%;
+  background-color: #E2E8F0;
+  border-radius: 2px;
+  transition: background-color 0.25s ease;
+}
+
+.password-meter-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+}
+
+.meter-bar.active-weak {
+  background-color: var(--danger);
+}
+
+.meter-bar.active-medium {
+  background-color: var(--warning);
+}
+
+.meter-bar.active-strong {
+  background-color: var(--safe);
+}
+
+.password-requirements {
+  list-style: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.password-requirements li:last-child {
+  margin-bottom: 0;
+}
+
+.password-requirements li.valid {
+  color: var(--safe);
+  font-weight: 500;
+}
+
+.password-requirements li svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.5;
+  stroke: currentColor;
+  fill: none;
+}
+
+/* Demo Credentials Box */
+.demo-credentials-box {
+  margin-top: 24px;
+  padding: 14px 16px;
+  background-color: #F4F6F9;
+  border: 1px dashed var(--border-light);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.demo-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.demo-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.demo-account-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.demo-btn-fill {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary-action);
+  cursor: pointer;
+}
+
+.demo-btn-fill:hover {
+  background: var(--primary-action);
+  color: #FFFFFF;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}

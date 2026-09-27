@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}404 Not Found &bull; {{ system_name }}{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 60px 20px;">
+  <div style="display: inline-flex; width: 64px; height: 64px; border-radius: 50%; background: #FFF8E1; color: var(--warning); align-items: center; justify-content: center; margin-bottom: 20px;">
+    <i data-lucide="alert-triangle" style="width: 32px; height: 32px;"></i>
+  </div>
+  <h1 style="font-size: 28px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Resource Not Found</h1>
+  <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 24px;">The page or analysis endpoint you requested does not exist.</p>
+  <a href="{{ url_for('dashboard.index') if current_user else url_for('auth.login') }}" class="btn btn-primary">
+    <i data-lucide="home"></i>
+    <span>Return to Safety</span>
+  </a>
+</div>
+{% endblock %}

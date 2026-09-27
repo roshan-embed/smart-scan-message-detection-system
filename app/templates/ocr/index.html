@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}Screenshot & Image Message Scanner 🖼️ - Smart Message Detection{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+      <span class="badge badge-navy" style="font-size: 11px; font-weight: 700;">MODULE 03</span>
+      <span class="badge badge-safe" style="font-size: 11px;">100% Offline OCR</span>
+    </div>
+    <h1 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">
+      Screenshot &amp; Image Message Scanner 🖼️
+    </h1>
+    <p style="color: var(--text-secondary); font-size: 13.5px; margin-top: 4px;">
+      Upload or drag &amp; drop a screenshot of a suspicious message. OCR extracts the text so you can verify and send it directly for threat analysis.
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 10px;">
+    <a href="{{ url_for('scanner.index') }}" class="btn btn-secondary btn-sm">
+      <i data-lucide="type"></i>
+      <span>Switch to Text Scanner</span>
+    </a>
+  </div>
+</div>
+
+<!-- Workflow Stepper Banner -->
+<div style="background: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: 16px 20px; margin-bottom: 24px; box-shadow: var(--shadow-card);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #00897B; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">1</div>
+      <div>
+        <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">Upload Screenshot</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">Image, WhatsApp, SMS capture</div>
+      </div>
+    </div>
+    <i data-lucide="chevron-right" style="color: var(--text-muted); width: 18px; height: 18px;"></i>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #0D1B2A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">2</div>
+      <div>
+        <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">OCR Extracts Text</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">Local vision pipeline</div>
+      </div>
+    </div>
+    <i data-lucide="chevron-right" style="color: var(--text-muted); width: 18px; height: 18px;"></i>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #F59E0B; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">3</div>
+      <div>
+        <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">User Verifies Text</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">Preview &amp; edit text</div>
+      </div>
+    </div>
+    <i data-lucide="chevron-right" style="color: var(--text-muted); width: 18px; height: 18px;"></i>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #EF4444; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">4</div>
+      <div>
+        <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">Threat Analysis</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">Full scam evaluation</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: start;">
+  
+  <!-- Left Column: Upload Dropzone & Demo Screenshots -->
+  <div>
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header">
+        <h2 class="card-header-title">
+          <i data-lucide="upload-cloud" style="color: var(--primary-teal);"></i>
+          <span>Upload Image / Screenshot</span>
+        </h2>
+        <span style="font-size: 12px; color: var(--text-secondary);">PNG, JPG, WEBP up to 16MB</span>
+      </div>
+
+      <div class="card-body">
+        <!-- Interactive Dropzone -->
+        <div 
+          id="ocr_dropzone" 
+          style="border: 2px dashed #CBD5E1; border-radius: 12px; padding: 36px 20px; text-align: center; background: #F8FAFC; cursor: pointer; transition: all 0.2s ease;"
+          onclick="document.getElementById('file_input').click()"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)"
+        >
+          <input type="file" id="file_input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+          
+          <div id="dropzone_empty_state">
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(0, 137, 123, 0.1); color: var(--primary-teal); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+              <i data-lucide="image" style="width: 26px; height: 26px;"></i>
+            </div>
+            <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+              Drop screenshot here, or <span style="color: var(--primary-teal); text-decoration: underline;">browse files</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary);">
+              Take a screenshot of a suspicious WhatsApp, SMS, or Email message
+            </div>
+          </div>
+
+          <!-- Preview State when image loaded -->
+          <div id="dropzone_preview_state" style="display: none;">
+            <img id="img_preview" src="" alt="Screenshot Preview" style="max-height: 220px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-light); margin-bottom: 12px; object-fit: contain;">
+            <div style="display: flex; justify-content: center; gap: 8px;">
+              <span class="badge badge-navy" id="preview_meta_badge">Screenshot Loaded</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); resetUploader();">
+                <i data-lucide="rotate-ccw"></i> Change
+              </button>
+            </div>
+          </div>
+
+          <!-- OCR Processing Progress -->
+          <div id="ocr_progress_box" style="display: none; margin-top: 16px;">
+            <div style="font-size: 12.5px; font-weight: 700; color: var(--primary-teal); margin-bottom: 6px;">
+              <span id="ocr_progress_text">Extracting text from image...</span>
+            </div>
+            <div style="height: 6px; width: 100%; background: #E2E8F0; border-radius: 999px; overflow: hidden;">
+              <div id="ocr_progress_bar" style="height: 100%; width: 35%; background: var(--primary-teal); transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Demo Screenshot Samples -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-header-title" style="font-size: 14px;">
+          <i data-lucide="sparkles" style="color: #F59E0B;"></i>
+          <span>Or Test with Realistic Screenshot Samples</span>
+        </h3>
+      </div>
+      <div class="card-body" style="padding: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          {% for s in samples %}
+          <div 
+            class="sample-screenshot-item" 
+            style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+            onclick="loadSampleScreenshot('{{ s.id }}')"
+          >
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 34px; height: 34px; border-radius: 6px; background: rgba(13, 27, 42, 0.05); display: flex; align-items: center; justify-content: center; color: var(--primary-navy);">
+                <i data-lucide="{{ s.icon }}"></i>
+              </div>
+              <div>
+                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">{{ s.title }}</div>
+                <div style="font-size: 11.5px; color: var(--text-secondary);">{{ s.subtitle }}</div>
+              </div>
+            </div>
+            <span class="badge badge-navy" style="font-size: 11px;">Test OCR</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Extracted Text Verification & Submission Form -->
+  <div>
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 class="card-header-title">
+            <i data-lucide="file-text" style="color: var(--primary-teal);"></i>
+            <span>Extracted Text Verification</span>
+          </h2>
+          <span style="font-size: 12px; color: var(--text-secondary);">Review &amp; edit extracted message text before analyzing</span>
+        </div>
+        <div id="ocr_confidence_badge" style="display: none;">
+          <span class="badge badge-safe">OCR Confidence: <strong id="ocr_conf_val">98%</strong></span>
+        </div>
+      </div>
+
+      <form action="{{ url_for('ocr.analyze_extracted') }}" method="POST">
+        <div class="card-body">
+          <!-- Channel Selector -->
+          <div style="margin-bottom: 16px;">
+            <label style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; display: block;">
+              Detected Channel Type
+            </label>
+            <div style="display: flex; gap: 10px;">
+              <label style="flex: 1; border: 1px solid var(--border-light); border-radius: 8px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                <input type="radio" name="message_type" value="whatsapp" id="channel_whatsapp" checked>
+                <i data-lucide="message-circle" style="width: 16px; height: 16px; color: #25D366;"></i>
+                <span>WhatsApp</span>
+              </label>
+
+              <label style="flex: 1; border: 1px solid var(--border-light); border-radius: 8px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                <input type="radio" name="message_type" value="sms" id="channel_sms">
+                <i data-lucide="smartphone" style="width: 16px; height: 16px; color: var(--primary-teal);"></i>
+                <span>SMS</span>
+              </label>
+
+              <label style="flex: 1; border: 1px solid var(--border-light); border-radius: 8px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                <input type="radio" name="message_type" value="email" id="channel_email">
+                <i data-lucide="mail" style="width: 16px; height: 16px; color: var(--danger);"></i>
+                <span>Email</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Sender Info Optional Field -->
+          <div style="margin-bottom: 16px;">
+            <label for="sender_info" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block;">
+              Sender Info / Contact (Optional)
+            </label>
+            <input 
+              type="text" 
+              name="sender_info" 
+              id="sender_info" 
+              class="form-control" 
+              placeholder="e.g. +91 98765 43210 or ALERT-SBI"
+            >
+          </div>
+
+          <!-- Extracted Text Area -->
+          <div style="position: relative;">
+            <label for="extracted_content" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: flex; justify-content: space-between;">
+              <span>Message Text (Editable)</span>
+              <span style="font-size: 11.5px; font-weight: 400; color: var(--text-secondary);">
+                <span id="char_count">0</span> characters &bull; <span id="word_count">0</span> words
+              </span>
+            </label>
+
+            <textarea 
+              name="content" 
+              id="extracted_content" 
+              class="form-control" 
+              rows="8" 
+              placeholder="Extracted screenshot text will appear here automatically. You can edit any misread characters before scanning..."
+              required
+              oninput="updateTextCounters()"
+            ></textarea>
+          </div>
+
+          <div style="background: #F8FAFC; border-left: 3px solid var(--primary-teal); padding: 10px 14px; border-radius: 4px; margin-top: 14px; font-size: 12px; color: var(--text-secondary);">
+            <i data-lucide="info" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+            <span><strong>User Verification Step:</strong> Verify links and phone numbers above. Once ready, click <strong>Analyze Message</strong> to compute threat scores.</span>
+          </div>
+        </div>
+
+        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" class="btn btn-secondary" onclick="clearExtractedText()">
+            <i data-lucide="rotate-ccw"></i>
+            <span>Clear Text</span>
+          </button>
+
+          <button type="submit" class="btn btn-primary" id="btn_analyze" disabled>
+            <i data-lucide="shield-alert"></i>
+            <span>Analyze Message</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('ocr_dropzone').style.borderColor = 'var(--primary-teal)';
+    document.getElementById('ocr_dropzone').style.background = '#F0FDFA';
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('ocr_dropzone').style.borderColor = '#CBD5E1';
+    document.getElementById('ocr_dropzone').style.background = '#F8FAFC';
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleDragLeave(e);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      uploadScreenshotFile(files[0]);
+    }
+  }
+
+  function handleFileSelect(e) {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      uploadScreenshotFile(files[0]);
+    }
+  }
+
+  function uploadScreenshotFile(file) {
+    const formData = new FormData();
+    formData.append('screenshot', file);
+
+    showOcrProgress('Reading image and extracting text with OCR...');
+
+    // Show image preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('img_preview').src = e.target.result;
+      document.getElementById('dropzone_empty_state').style.display = 'none';
+      document.getElementById('dropzone_preview_state').style.display = 'block';
+      document.getElementById('preview_meta_badge').textContent = file.name + ' (' + Math.round(file.size/1024) + ' KB)';
+    };
+    reader.readAsDataURL(file);
+
+    fetch("{{ url_for('ocr.extract') }}", {
+      method: 'POST',
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+      hideOcrProgress();
+      if (data.success && data.data) {
+        populateExtractedText(data.data.extracted_text, data.data.confidence);
+      } else {
+        alert(data.message || 'Failed to extract text from image.');
+      }
+    })
+    .catch(err => {
+      hideOcrProgress();
+      console.error(err);
+      alert('Error during OCR processing.');
+    });
+  }
+
+  function loadSampleScreenshot(sampleId) {
+    showOcrProgress('Loading sample screenshot and running OCR extraction...');
+    const formData = new FormData();
+    formData.append('sample_id', sampleId);
+
+    fetch("{{ url_for('ocr.extract') }}", {
+      method: 'POST',
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+      hideOcrProgress();
+      if (data.success && data.data) {
+        // Update preview image
+        document.getElementById('img_preview').src = data.data.image_url;
+        document.getElementById('dropzone_empty_state').style.display = 'none';
+        document.getElementById('dropzone_preview_state').style.display = 'block';
+        document.getElementById('preview_meta_badge').textContent = data.data.sample_title;
+
+        // Auto select channel
+        if (sampleId === 'whatsapp') {
+          document.getElementById('channel_whatsapp').checked = true;
+          document.getElementById('sender_info').value = '+91 98765 43210';
+        } else if (sampleId === 'sbi') {
+          document.getElementById('channel_sms').checked = true;
+          document.getElementById('sender_info').value = 'ALERT-SBI';
+        } else {
+          document.getElementById('channel_email').checked = true;
+          document.getElementById('sender_info').value = 'claims@global-rewards.xyz';
+        }
+
+        populateExtractedText(data.data.extracted_text, data.data.confidence);
+      }
+    })
+    .catch(err => {
+      hideOcrProgress();
+      console.error(err);
+    });
+  }
+
+  function populateExtractedText(text, conf) {
+    const textarea = document.getElementById('extracted_content');
+    textarea.value = text;
+    updateTextCounters();
+
+    const confBadge = document.getElementById('ocr_confidence_badge');
+    if (confBadge) {
+      confBadge.style.display = 'block';
+      document.getElementById('ocr_conf_val').textContent = (conf || 95) + '%';
+    }
+
+    document.getElementById('btn_analyze').disabled = false;
+  }
+
+  function showOcrProgress(msg) {
+    const pBox = document.getElementById('ocr_progress_box');
+    pBox.style.display = 'block';
+    document.getElementById('ocr_progress_text').textContent = msg;
+    const bar = document.getElementById('ocr_progress_bar');
+    bar.style.width = '20%';
+    setTimeout(() => { bar.style.width = '65%'; }, 200);
+    setTimeout(() => { bar.style.width = '90%'; }, 500);
+  }
+
+  function hideOcrProgress() {
+    const bar = document.getElementById('ocr_progress_bar');
+    bar.style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('ocr_progress_box').style.display = 'none';
+      bar.style.width = '0%';
+    }, 300);
+  }
+
+  function resetUploader() {
+    document.getElementById('file_input').value = '';
+    document.getElementById('dropzone_preview_state').style.display = 'none';
+    document.getElementById('dropzone_empty_state').style.display = 'block';
+  }
+
+  function clearExtractedText() {
+    document.getElementById('extracted_content').value = '';
+    updateTextCounters();
+    document.getElementById('ocr_confidence_badge').style.display = 'none';
+    document.getElementById('btn_analyze').disabled = true;
+  }
+
+  function updateTextCounters() {
+    const val = document.getElementById('extracted_content').value || '';
+    document.getElementById('char_count').textContent = val.length;
+    const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+    document.getElementById('word_count').textContent = words;
+    document.getElementById('btn_analyze').disabled = (val.trim().length === 0);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateTextCounters();
+    if (window.lucide) window.lucide.createIcons();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,677 @@
+/* ===================================================================
+   SMART SCAM MESSAGE DETECTION SYSTEM
+   Module 3: Message Security Checkup & Module 4: Scam Indicators
+=================================================================== */
+
+/* Module 3: Message Security Checkup Checklist */
+.checkup-card {
+  background-color: var(--card-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow-subtle);
+}
+
+.checkup-header {
+  padding: 16px 20px;
+  background-color: #F8FAFC;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkup-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-navy);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.5px;
+}
+
+.checkup-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-light);
+  gap: 16px;
+  transition: background-color 0.15s ease;
+}
+
+.checkup-row:last-child {
+  border-bottom: none;
+}
+
+.checkup-row:hover {
+  background-color: #FAFBFC;
+}
+
+.checkup-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkup-emoji-icon {
+  font-size: 18px;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkup-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.checkup-subtext {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.checkup-status-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkup-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.checkup-status-tag.suspicious {
+  background-color: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+}
+
+.checkup-status-tag.warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+}
+
+.checkup-status-tag.detected {
+  background-color: var(--safe-bg);
+  color: var(--safe);
+  border: 1px solid var(--safe-border);
+}
+
+.checkup-status-tag.safe {
+  background-color: #F4F5F7;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+}
+
+/* Module 4: Scam Indicators Found Report */
+.indicators-card {
+  background-color: #FFFFFF;
+  border: 2px solid #D9DEE7;
+  border-radius: var(--radius-card);
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(23, 43, 77, 0.06);
+}
+
+.indicators-card.high-risk {
+  border-color: var(--danger);
+}
+
+.indicators-card.suspicious-risk {
+  border-color: var(--warning);
+}
+
+.indicators-header {
+  padding: 16px 20px;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.indicators-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary-navy);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.indicators-list {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px;
+  gap: 10px;
+}
+
+.indicator-item-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background-color: #FAFBFC;
+}
+
+.indicator-badge-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.indicator-dot {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.indicator-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 24px;
+  margin-top: 3px;
+}
+
+.indicators-footer-count {
+  padding: 14px 20px;
+  background-color: #F8FAFC;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-navy);
+}
+
+/* ===================================================================
+   Module 5: Local DistilBERT AI Scam Classification
+=================================================================== */
+.ai-card {
+  background-color: #FFFFFF;
+  border: 2px solid #D9DEE7;
+  border-radius: var(--radius-card);
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(23, 43, 77, 0.06);
+}
+
+.ai-card.scam-predicted {
+  border-color: var(--danger);
+}
+
+.ai-card.safe-predicted {
+  border-color: var(--safe);
+}
+
+.ai-header {
+  padding: 16px 20px;
+  background-color: #F8FAFC;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ai-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary-navy);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-body {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ai-prediction-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.ai-prediction-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-prediction-value {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.ai-prediction-value.scam {
+  color: var(--danger);
+}
+
+.ai-prediction-value.safe {
+  color: var(--safe);
+}
+
+.ai-confidence-box {
+  background-color: #FAFBFC;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-confidence-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secondary-slate);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-ascii-bar {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--primary-navy);
+  background-color: #FFFFFF;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  display: inline-block;
+  width: fit-content;
+}
+
+.ai-visual-progress {
+  height: 8px;
+  width: 100%;
+  background-color: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ai-visual-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.ai-visual-fill.scam {
+  background-color: var(--danger);
+}
+
+.ai-visual-fill.safe {
+  background-color: var(--safe);
+}
+
+.ai-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+}
+
+.ai-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.ai-meta-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.ai-meta-val {
+  color: var(--primary-navy);
+  font-weight: 700;
+}
+
+/* ===================================================================
+   Module 6: Risk Assessment & Threat Scoring 📊 Styles
+=================================================================== */
+.risk-card {
+  background-color: var(--card-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(23, 43, 77, 0.06);
+}
+
+.risk-header {
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #172B4D 0%, #253858 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.risk-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.5px;
+  color: #FFFFFF;
+}
+
+.risk-header-badge {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.risk-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Fusion Flow Diagram */
+.risk-fusion-flow {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 16px;
+  text-align: center;
+}
+
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.flow-step-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.flow-step-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary-navy);
+}
+
+.flow-operator {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--secondary-slate);
+}
+
+/* Primary Hero Score Banner */
+.risk-hero-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-radius: 12px;
+  background-color: #FAFBFC;
+  border: 2px solid;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.risk-hero-score.safe-border {
+  border-color: #C8E6C9;
+  background-color: #F1F8E9;
+}
+
+.risk-hero-score.warning-border {
+  border-color: #FFE082;
+  background-color: #FFFDE7;
+}
+
+.risk-hero-score.danger-border {
+  border-color: #FFCDD2;
+  background-color: #FFEBEE;
+}
+
+.risk-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.risk-hero-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.risk-hero-numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.risk-hero-val {
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.risk-hero-denom {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.risk-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Three Zone Risk Meter Bar */
+.risk-meter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.risk-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.risk-meter-bar-track {
+  height: 14px;
+  width: 100%;
+  border-radius: 7px;
+  background: linear-gradient(to right, #2E7D32 0%, #2E7D32 30%, #F9A825 31%, #F9A825 60%, #C62828 61%, #C62828 100%);
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.risk-meter-pin {
+  position: absolute;
+  top: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 3px solid var(--primary-navy);
+  transform: translateX(-50%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--primary-navy);
+  transition: left 0.5s ease;
+}
+
+.risk-zones-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+/* Two-column Fusion Breakdown */
+.risk-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.risk-subcard {
+  background-color: #FAFBFC;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.risk-subcard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.risk-subcard-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-navy);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.risk-subcard-score {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.risk-factor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.risk-factor-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* Recommendations and Next Steps */
+.risk-advisory-card {
+  background-color: #F8FAFC;
+  border-left: 4px solid var(--primary-navy);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.risk-advisory-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-navy);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.risk-advisory-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}500 Server Error &bull; {{ system_name }}{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 60px 20px;">
+  <div style="display: inline-flex; width: 64px; height: 64px; border-radius: 50%; background: #FFEBEE; color: var(--danger); align-items: center; justify-content: center; margin-bottom: 20px;">
+    <i data-lucide="shield-alert" style="width: 32px; height: 32px;"></i>
+  </div>
+  <h1 style="font-size: 28px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Internal Engine Error</h1>
+  <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 24px;">An internal error occurred during request processing. Please try again.</p>
+  <a href="{{ url_for('dashboard.index') if current_user else url_for('auth.login') }}" class="btn btn-secondary">
+    <i data-lucide="refresh-cw"></i>
+    <span>Back to Dashboard</span>
+  </a>
+</div>
+{% endblock %}

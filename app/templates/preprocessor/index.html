@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Message Preprocessing & Normalization &bull; {{ system_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/preprocessor.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-info">
+    <h1>Message Preprocessing & Normalization</h1>
+    <p>Module 03 &bull; Prepares and standardizes raw unstructured message text for rule analysis and offline DistilBERT embedding.</p>
+  </div>
+  <div class="page-header-actions">
+    <span class="badge badge-navy">Module 03: NLP Pipeline</span>
+    <span class="badge badge-safe"><i data-lucide="check-circle-2"></i> Preprocessor Active</span>
+  </div>
+</div>
+
+<!-- 5-Stage Pipeline Flow Header -->
+<div class="pipeline-steps">
+  <div class="pipeline-step-item {% if result %}active{% endif %}">
+    <span class="pipeline-step-num">1</span>
+    <span>Raw Ingestion</span>
+  </div>
+  <span class="pipeline-step-arrow">&rarr;</span>
+  
+  <div class="pipeline-step-item {% if result %}active{% endif %}">
+    <span class="pipeline-step-num">2</span>
+    <span>Text Cleaning</span>
+  </div>
+  <span class="pipeline-step-arrow">&rarr;</span>
+
+  <div class="pipeline-step-item {% if result %}active{% endif %}">
+    <span class="pipeline-step-num">3</span>
+    <span>Normalization</span>
+  </div>
+  <span class="pipeline-step-arrow">&rarr;</span>
+
+  <div class="pipeline-step-item {% if result %}active{% endif %}">
+    <span class="pipeline-step-num">4</span>
+    <span>Entity Extraction</span>
+  </div>
+  <span class="pipeline-step-arrow">&rarr;</span>
+
+  <div class="pipeline-step-item {% if result %}active{% endif %}">
+    <span class="pipeline-step-num">5</span>
+    <span>Tokenization (DistilBERT)</span>
+  </div>
+</div>
+
+<!-- Input & Configuration Card -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h2 class="card-header-title">
+      <i data-lucide="binary"></i>
+      <span>Message Preprocessing Workbench</span>
+    </h2>
+    <span style="font-size: 13px; color: var(--text-secondary);">Enter text or select a challenge sample below:</span>
+  </div>
+
+  <form action="{{ url_for('preprocessor.process') }}" method="POST">
+    <div class="card-body">
+      
+      <!-- Quick Test Cases Pills -->
+      <div class="preprocessor-samples-box">
+        <span style="font-weight: 600; color: var(--text-primary);">Test Evasion Cases:</span>
+        {% for key, s in samples.items() %}
+          <button type="button" class="sample-pill-btn" data-sample-key="{{ key }}">
+            <i data-lucide="sparkles" style="width: 12px; height: 12px; display: inline;"></i>
+            <span>{{ s.title }}</span>
+          </button>
+        {% endfor %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label for="preprocessor_input_text" class="form-label">
+          Input Message Text <span class="required">*</span>
+        </label>
+        <textarea 
+          id="preprocessor_input_text" 
+          name="text" 
+          class="form-control" 
+          rows="5" 
+          placeholder="Paste SMS, WhatsApp message, or Email with suspected obfuscation, homoglyphs, or links to preprocess..."
+          required
+        >{{ input_text or '' }}</textarea>
+      </div>
+
+    </div>
+
+    <div class="card-footer">
+      <button type="button" class="btn btn-secondary" id="btn_clear_preprocessor">
+        <i data-lucide="rotate-ccw"></i>
+        <span>Clear</span>
+      </button>
+
+      <button type="submit" class="btn btn-primary">
+        <i data-lucide="play"></i>
+        <span>Run Preprocessing Pipeline</span>
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Preprocessing Pipeline Results (Displayed after running) -->
+{% if result %}
+<div id="preprocessor_results_wrapper">
+
+  <!-- Stage 1 & 2: Cleaning & Normalization Comparison -->
+  <div class="comparison-grid">
+    
+    <!-- Original Raw Text -->
+    <div class="comparison-box">
+      <div class="comparison-title">
+        <span>Stage 1: Raw Ingested Text</span>
+        <span class="badge badge-navy">{{ result.stage_1_raw | length }} chars</span>
+      </div>
+      <div class="comparison-content">{{ result.stage_1_raw }}</div>
+    </div>
+
+    <!-- Cleaned & Normalized Standard Format -->
+    <div class="comparison-box">
+      <div class="comparison-title">
+        <span>Stage 2 & 3: Cleaned & Normalized Standard Form</span>
+        <span class="badge badge-safe"><i data-lucide="check"></i> Standardized</span>
+      </div>
+      <div class="comparison-content">{{ result.stage_3_normalize.normalized_text }}</div>
+    </div>
+
+  </div>
+
+  <!-- Normalization Details Stats Card -->
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+      <h3 class="card-header-title">
+        <i data-lucide="sliders"></i>
+        <span>Text Transformation & Deobfuscation Metrics</span>
+      </h3>
+    </div>
+    <div class="card-body">
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 200px;">
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Removed Obfuscation Elements:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            {% for elem in result.stage_2_clean.removed_elements %}
+              <span class="badge badge-danger">{{ elem }}</span>
+            {% else %}
+              <span style="font-size: 13px; color: var(--text-muted);">None detected (clean payload)</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div style="flex: 1; min-width: 180px;">
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Homoglyphs De-obfuscated:</div>
+          <span class="badge {% if result.stage_3_normalize.homoglyphs_replaced > 0 %}badge-warning{% else %}badge-safe{% endif %}" style="font-size: 13px;">
+            {{ result.stage_3_normalize.homoglyphs_replaced }} characters normalized
+          </span>
+        </div>
+
+        <div style="flex: 1; min-width: 180px;">
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Contractions Expanded:</div>
+          <span class="badge badge-navy" style="font-size: 13px;">
+            {{ result.stage_3_normalize.contractions_expanded }} expansions
+          </span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 4: Extracted Entities (URLs, Phones, Emails) -->
+  <div class="extraction-grid">
+    
+    <!-- URLs & Domains -->
+    <div class="extraction-card">
+      <div class="extraction-card-header">
+        <div class="extraction-card-title">
+          <i data-lucide="link"></i>
+          <span>Extracted URLs ({{ result.stage_4_entities.url_count }})</span>
+        </div>
+        <span class="badge badge-navy">Web Links</span>
+      </div>
+
+      {% for u in result.stage_4_entities.urls %}
+        <div class="url-detail-item">
+          <div class="url-link-line">
+            <i data-lucide="external-link" style="width: 13px; height: 13px;"></i>
+            <span>{{ u.raw_url }}</span>
+          </div>
+          <div class="url-meta-chips">
+            <span class="badge badge-navy">Domain: {{ u.domain }}</span>
+            {% if u.is_suspicious_tld %}
+              <span class="badge badge-danger">Suspicious TLD (.{{ u.tld }})</span>
+            {% endif %}
+            {% if u.is_ip_host %}
+              <span class="badge badge-danger">Raw IP Host</span>
+            {% endif %}
+            {% if u.is_url_shortener %}
+              <span class="badge badge-warning">URL Shortener</span>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px;">
+          No URLs or domains detected in this message.
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Phone Numbers -->
+    <div class="extraction-card">
+      <div class="extraction-card-header">
+        <div class="extraction-card-title">
+          <i data-lucide="phone"></i>
+          <span>Extracted Phone Numbers ({{ result.stage_4_entities.phone_count }})</span>
+        </div>
+        <span class="badge badge-navy">Contacts</span>
+      </div>
+
+      {% for p in result.stage_4_entities.phones %}
+        <div class="url-detail-item">
+          <div style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+            {{ p.raw_phone }}
+          </div>
+          <div class="url-meta-chips">
+            <span class="badge badge-navy">E.164: {{ p.normalized_digits }}</span>
+            <span class="badge badge-teal">{{ p.digit_count }} Digits</span>
+            {% if p.is_international %}
+              <span class="badge badge-safe">International</span>
+            {% endif %}
+            {% if p.is_toll_free %}
+              <span class="badge badge-warning">Toll-Free</span>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px;">
+          No telephone numbers detected.
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Email Addresses -->
+    <div class="extraction-card">
+      <div class="extraction-card-header">
+        <div class="extraction-card-title">
+          <i data-lucide="mail"></i>
+          <span>Extracted Email Addresses ({{ result.stage_4_entities.email_count }})</span>
+        </div>
+        <span class="badge badge-navy">Mailboxes</span>
+      </div>
+
+      {% for e in result.stage_4_entities.emails %}
+        <div class="url-detail-item">
+          <div style="font-family: var(--font-mono); font-weight: 600; color: var(--primary-action); margin-bottom: 4px;">
+            {{ e.email }}
+          </div>
+          <div class="url-meta-chips">
+            <span class="badge badge-navy">User: {{ e.username }}</span>
+            <span class="badge badge-navy">Domain: {{ e.domain }}</span>
+            {% if e.is_suspicious_tld %}
+              <span class="badge badge-danger">Suspicious TLD</span>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px;">
+          No email addresses detected.
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <!-- Stage 5: Tokenization & Linguistic Analysis -->
+  <div class="token-stream-box">
+    <div class="card-header-title" style="margin-bottom: 14px;">
+      <i data-lucide="list-ordered"></i>
+      <span>Stage 5: Tokenization Stream & Lexical Breakdown</span>
+    </div>
+
+    <!-- Linguistic Stats -->
+    <div class="token-stats-bar">
+      <div>Total Tokens: <strong>{{ result.stage_5_tokenization.token_count }}</strong></div>
+      <div>Vocabulary (Unique): <strong>{{ result.stage_5_tokenization.vocabulary_size }}</strong></div>
+      <div>Stopwords: <strong>{{ result.stage_5_tokenization.stopword_count }}</strong></div>
+      <div>Lexical Diversity: <strong>{{ result.stage_5_tokenization.lexical_diversity }}</strong></div>
+    </div>
+
+    <!-- Token Filter Buttons -->
+    <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+      <span style="font-size: 12px; color: var(--text-secondary);">Highlight:</span>
+      <button type="button" class="btn btn-secondary btn-sm token-filter-btn active" data-filter="all">All</button>
+      <button type="button" class="btn btn-secondary btn-sm token-filter-btn" data-filter="stopword">Stopwords</button>
+      <button type="button" class="btn btn-secondary btn-sm token-filter-btn" data-filter="punctuation">Punctuation</button>
+      <button type="button" class="btn btn-secondary btn-sm token-filter-btn" data-filter="numeric">Numbers</button>
+    </div>
+
+    <!-- Interactive Token Cloud -->
+    <div class="token-cloud">
+      {% for t in result.stage_5_tokenization.tokens %}
+        <div class="token-chip {% if t.is_stopword %}stopword{% elif t.is_punctuation %}punctuation{% elif t.is_numeric %}numeric{% endif %}" title="Index: {{ t.index }}">
+          <span>{{ t.token }}</span>
+          <span class="token-idx">#{{ t.index }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Local DistilBERT Pre-Encoding Format Preview -->
+    <div style="margin-top: 20px;">
+      <div style="font-size: 12px; font-weight: 700; color: var(--secondary-slate); text-transform: uppercase; margin-bottom: 6px;">
+        Local DistilBERT Model Pre-Encoding Preview ([CLS] ... [SEP]):
+      </div>
+      <div class="bert-preview-box">
+        {% for bt in result.stage_5_tokenization.distilbert_tokens_preview %}
+          {% if bt == '[CLS]' or bt == '[SEP]' %}
+            <span class="bert-special-token">{{ bt }}</span>
+          {% else %}
+            <span>{{ bt }}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/preprocessor.js') }}"></script>
+{% endblock %}

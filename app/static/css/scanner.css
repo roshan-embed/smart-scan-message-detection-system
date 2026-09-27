@@ -1,0 +1,302 @@
+/* ===================================================================
+   SMART SCAM MESSAGE DETECTION SYSTEM
+   Module 2: Smart Message Scanner Stylesheet
+=================================================================== */
+
+/* Channel Switcher Tabs */
+.channel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #EEF2F6;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 20px;
+}
+
+.channel-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--secondary-slate);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.channel-tab-btn:hover {
+  color: var(--primary-navy);
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.channel-tab-btn.active {
+  background-color: #FFFFFF;
+  color: var(--primary-navy);
+  box-shadow: 0 1px 3px rgba(23, 43, 77, 0.08);
+}
+
+.channel-tab-btn svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Sample Quick-Load Bar */
+.sample-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #F8FAFC;
+  border: 1px dashed var(--border-light);
+  border-radius: 6px;
+  padding: 8px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sample-btn {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  color: var(--primary-action);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.sample-btn:hover {
+  background-color: var(--primary-action);
+  color: #FFFFFF;
+  border-color: var(--primary-action);
+}
+
+.sample-btn svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Scanner Textarea Box */
+.scanner-textarea-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.scanner-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 16px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-input);
+  outline: none;
+  resize: vertical;
+  line-height: 1.6;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.scanner-textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.15);
+}
+
+.scanner-textarea::placeholder {
+  color: #A5B2C6;
+  line-height: 1.5;
+}
+
+/* Live Character & Metrics Bar */
+.counter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.counter-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.counter-stat strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.counter-progress-box {
+  width: 120px;
+  height: 6px;
+  background-color: #E2E8F0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.counter-progress-fill {
+  height: 100%;
+  width: 0%;
+  background-color: var(--primary-action);
+  transition: width 0.15s ease, background-color 0.15s ease;
+}
+
+.counter-progress-fill.limit-warn {
+  background-color: var(--warning);
+}
+
+.counter-progress-fill.limit-danger {
+  background-color: var(--danger);
+}
+
+/* Scanner Action Buttons */
+.scanner-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Ingestion & Analysis Result Card */
+.result-card {
+  border: 2px solid var(--primary-action);
+  background-color: #FFFFFF;
+  margin-top: 28px;
+}
+
+.result-header {
+  background-color: #E0F2F1;
+  padding: 16px 20px;
+  border-bottom: 1px solid #B2DFDB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #004D40;
+}
+
+.result-header-title svg {
+  width: 20px;
+  height: 20px;
+  stroke: #00796B;
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.entity-box {
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.entity-box-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary-slate);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.entity-box-title svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.entity-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.entity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.entity-pill-url {
+  background-color: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #FFCDD2;
+}
+
+.entity-pill-phone {
+  background-color: #EBF0F7;
+  color: var(--primary-navy);
+  border: 1px solid #D9DEE7;
+}
+
+.entity-pill-urgency {
+  background-color: #FFF8E1;
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.raw-content-display {
+  background-color: #F4F6F9;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 180px;
+  overflow-y: auto;
+}

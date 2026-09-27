@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}URL &amp; Sender Verification 🔗 - Smart Message Detection{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+      <span class="badge badge-navy" style="font-size: 11px; font-weight: 700;">MODULE 04</span>
+      <span class="badge badge-safe" style="font-size: 11px;">Origin &amp; Infrastructure Layer</span>
+    </div>
+    <h1 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">
+      URL &amp; Sender Verification 🔗
+    </h1>
+    <p style="color: var(--text-secondary); font-size: 13.5px; margin-top: 4px;">
+      Investigates who and where the message is originating from, independent of message text or AI classification.
+    </p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: start;">
+
+  <!-- Left: Input Form & Sample Selectors -->
+  <div>
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header">
+        <h2 class="card-header-title">
+          <i data-lucide="shield-check" style="color: var(--primary-teal);"></i>
+          <span>Inspect Destination &amp; Origin</span>
+        </h2>
+      </div>
+
+      <form action="{{ url_for('verification.inspect') }}" method="POST">
+        <div class="card-body">
+          <!-- URL Input -->
+          <div style="margin-bottom: 18px;">
+            <label for="url_field" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block;">
+              Embedded Link / URL
+            </label>
+            <input 
+              type="text" 
+              name="url" 
+              id="url_field" 
+              class="form-control" 
+              placeholder="e.g. http://example.xyz/login or https://bit.ly/xyz123"
+              value="{{ url_input or '' }}"
+            >
+            <span style="font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; display: block;">
+              Screens HTTPS encryption, shorteners, raw IPs, and TLD reputation.
+            </span>
+          </div>
+
+          <!-- Sender Input -->
+          <div style="margin-bottom: 18px;">
+            <label for="sender_field" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block;">
+              Sender Info / Contact
+            </label>
+            <input 
+              type="text" 
+              name="sender" 
+              id="sender_field" 
+              class="form-control" 
+              placeholder="e.g. ALERT-SBI, +91 98765 43210, or support@sbi-kyc.xyz"
+              value="{{ sender_input or '' }}"
+            >
+            <span style="font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; display: block;">
+              Screens telecom header compliance, VoIP numbers, and email spoofing.
+            </span>
+          </div>
+
+          <!-- Quick Samples -->
+          <div style="margin-top: 14px;">
+            <span style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Quick Test Samples:</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setVerificationSample('http://example.xyz/login', 'ALERT-SBI')">
+                <span>🔴 http://example.xyz (High Risk)</span>
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setVerificationSample('https://bit.ly/claim50k', '+91 98765 43210')">
+                <span>🟡 bit.ly shortlink (Suspicious)</span>
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setVerificationSample('https://onlinesbi.sbi/portal', 'VK-SBIINB')">
+                <span>🟢 Official State Bank (Safe)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" class="btn btn-secondary" onclick="clearVerificationForm()">
+            <i data-lucide="rotate-ccw"></i>
+            <span>Clear</span>
+          </button>
+
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="search"></i>
+            <span>Inspect Origin &amp; URL</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right: Verification Results matching User Specification -->
+  <div>
+    {% if url_result %}
+    <!-- Exact User Specification Card: URL Status -->
+    <div class="card" style="margin-bottom: 20px; border-left: 4px solid {{ url_result.status_color }};">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="globe" style="color: var(--primary-teal);"></i>
+          <span style="font-weight: 800; font-size: 15px;">URL VERIFICATION REPORT</span>
+        </div>
+        <span class="badge {{ url_result.status_badge }}" style="font-size: 12px; font-weight: 800; padding: 4px 12px;">
+          {{ url_result.url_status }}
+        </span>
+      </div>
+
+      <div class="card-body">
+        <div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-family: monospace; font-size: 13.5px; color: var(--primary-navy); word-break: break-all;">
+          <strong>URL:</strong> {{ url_result.url }}
+        </div>
+
+        <!-- Metric Table Matching User Example -->
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 6px;">
+            <span style="font-weight: 600; color: var(--text-primary); width: 140px;">HTTPS:</span>
+            <span style="font-weight: 700; color: {% if url_result.has_https %}#10B981{% else %}#EF4444{% endif %};">
+              {% if url_result.has_https %}✓ (Secure Connection){% else %}❌ (Unencrypted / Insecure){% endif %}
+            </span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 6px;">
+            <span style="font-weight: 600; color: var(--text-primary); width: 140px;">Shortened:</span>
+            <span style="font-weight: 700; color: {% if url_result.is_shortened %}#EF4444{% else %}#10B981{% endif %};">
+              {% if url_result.is_shortened %}⚠ Yes (Destination Hidden){% else %}❌ No (Direct Link){% endif %}
+            </span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 6px;">
+            <span style="font-weight: 600; color: var(--text-primary); width: 140px;">IP Address:</span>
+            <span style="font-weight: 700; color: {% if url_result.is_ip_address %}#EF4444{% else %}#10B981{% endif %};">
+              {% if url_result.is_ip_address %}⚠ Yes (Raw IP Hostname){% else %}❌ No (Domain Name){% endif %}
+            </span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 6px;">
+            <span style="font-weight: 600; color: var(--text-primary); width: 140px;">Domain Pattern:</span>
+            <span style="font-weight: 700; color: {% if url_result.is_suspicious_pattern %}#EF4444{% else %}#10B981{% endif %};">
+              {% if url_result.is_suspicious_pattern %}⚠ Suspicious{% else %}✓ Benign{% endif %}
+            </span>
+          </div>
+
+        </div>
+
+        {% if url_result.domain_patterns %}
+        <div style="margin-top: 14px; padding: 10px 14px; background: #FFFBEB; border-left: 3px solid #F59E0B; border-radius: 4px; font-size: 12px; color: #92400E;">
+          <strong>Detected Patterns:</strong>
+          <ul style="margin: 4px 0 0 16px; padding: 0;">
+            {% for dp in url_result.domain_patterns %}
+            <li>{{ dp }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Big Status Callout -->
+        <div style="margin-top: 16px; padding: 14px; text-align: center; border-radius: 8px; background: {% if url_result.url_status == 'HIGH RISK' %}#FEF2F2{% elif url_result.url_status == 'SUSPICIOUS' %}#FFFBEB{% else %}#F0FDF4{% endif %};">
+          <div style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">URL Status</div>
+          <div style="font-size: 20px; font-weight: 900; color: {{ url_result.status_color }}; margin-top: 2px;">
+            {{ url_result.url_status }}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sender_result %}
+    <!-- Sender Verification Card -->
+    <div class="card" style="border-left: 4px solid {% if sender_result.sender_status == 'HIGH RISK' %}#EF4444{% else %}#10B981{% endif %};">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="user-check" style="color: var(--primary-teal);"></i>
+          <span style="font-weight: 800; font-size: 15px;">SENDER IDENTITY VERIFICATION</span>
+        </div>
+        <span class="badge {{ sender_result.status_badge }}" style="font-size: 12px; font-weight: 800; padding: 4px 12px;">
+          {{ sender_result.sender_status }}
+        </span>
+      </div>
+
+      <div class="card-body">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13.5px;">
+          <span style="color: var(--text-secondary);">Sender ID / Number:</span>
+          <code>{{ sender_result.sender_raw }}</code>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13.5px;">
+          <span style="color: var(--text-secondary);">Identity Type:</span>
+          <strong>{{ sender_result.sender_type }}</strong>
+        </div>
+
+        <div style="margin-top: 12px; padding: 10px 14px; background: #F8FAFC; border-radius: 6px; font-size: 12.5px;">
+          <strong>Origin Assessment:</strong>
+          <ul style="margin: 4px 0 0 16px; padding: 0; color: var(--text-secondary);">
+            {% for d in sender_result.details %}
+            <li>{{ d }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function setVerificationSample(url, sender) {
+    document.getElementById('url_field').value = url;
+    document.getElementById('sender_field').value = sender;
+  }
+
+  function clearVerificationForm() {
+    document.getElementById('url_field').value = '';
+    document.getElementById('sender_field').value = '';
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) window.lucide.createIcons();
+  });
+</script>
+{% endblock %}

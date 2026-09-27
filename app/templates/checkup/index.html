@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Message Security Checkup &bull; {{ system_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/checkup.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-info">
+    <h1>Message Security Checkup 🔎</h1>
+    <p>Module 03 &bull; Give the user an initial security overview of the submitted message.</p>
+  </div>
+  <div class="page-header-actions">
+    <span class="badge badge-navy">Module 03: Security Checkup</span>
+    <span class="badge badge-teal"><i data-lucide="shield-search"></i> Screening Active</span>
+    <a href="{{ url_for('scanner.index') }}" class="btn btn-secondary btn-sm">
+      <i data-lucide="arrow-left"></i>
+      <span>Scanner</span>
+    </a>
+  </div>
+</div>
+
+<!-- Input Form & Sample Selection Card -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h2 class="card-header-title">
+      <i data-lucide="file-search"></i>
+      <span>Submit Message for Security Checkup</span>
+    </h2>
+    <span style="font-size: 13px; color: var(--text-secondary);">Screening for links, banking content, KYC, sensitive info, and urgency</span>
+  </div>
+
+  <div class="card-body">
+    <!-- Preset Samples Bar -->
+    <div class="sample-bar" style="margin-bottom: 16px;">
+      <span style="font-size: 13px; font-weight: 600; color: var(--secondary-slate);">Load Preset Test Samples:</span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        {% for key, s in samples.items() %}
+        <button 
+          type="button" 
+          class="sample-btn checkup-sample-btn" 
+          data-text="{{ s.text }}"
+        >
+          <i data-lucide="sparkles"></i>
+          <span>{{ s.title }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <form action="{{ url_for('checkup.analyze') }}" method="POST" id="checkup_form">
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="checkup_text_input" class="form-label">
+          Message Text <span class="required">*</span>
+        </label>
+        <div class="scanner-textarea-wrapper">
+          <textarea 
+            id="checkup_text_input" 
+            name="text" 
+            class="scanner-textarea" 
+            rows="5"
+            placeholder="Paste raw SMS, WhatsApp, or Email message here to run the Security Checkup..."
+            required
+          >{{ input_text if input_text else '' }}</textarea>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="font-size: 12px; color: var(--text-secondary);">
+          <i data-lucide="info" style="width: 13px; height: 13px; vertical-align: middle;"></i>
+          Evaluates 8 security vectors: Links, Banking, KYC, Sensitive Data, Urgency, UPI, Contacts, and Category.
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn_clear_checkup">
+            <i data-lucide="rotate-ccw"></i>
+            <span>Clear</span>
+          </button>
+          <button type="submit" class="btn btn-primary" id="btn_run_checkup">
+            <i data-lucide="search-check"></i>
+            <span>Run Security Checkup</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Security Checkup Results Display -->
+{% if checkup %}
+<div class="checkup-card" id="checkup_results_card">
+  
+  <!-- Checkup Card Header -->
+  <div class="checkup-header">
+    <div class="checkup-title">
+      <span style="font-size: 18px;">🔎</span>
+      <span>{{ checkup.summary_title }}</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span style="font-size: 12px; color: var(--text-secondary);">Detected Category:</span>
+      <span class="badge badge-navy" style="font-weight: 700;">{{ checkup.message_category }}</span>
+    </div>
+  </div>
+
+  <!-- Checkup Checklist Rows -->
+  <div class="checkup-grid">
+
+    <!-- 1. Link Found Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">🔗</div>
+        <div>
+          <div class="checkup-label">Link Found</div>
+          <div class="checkup-subtext">
+            {% if checkup.link_check.detected %}
+              {{ checkup.link_check.detected_items | length }} URL(s) detected: 
+              <code>{{ checkup.link_check.detected_items | join(', ') }}</code>
+              {% if checkup.link_check.reasons %}
+                &bull; <span style="color: var(--danger);">{{ checkup.link_check.reasons | join('; ') }}</span>
+              {% endif %}
+            {% else %}
+              No web links or domain references identified in message text
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.link_check.is_suspicious %}
+          <span class="checkup-status-tag suspicious">
+            <span>⚠</span> Suspicious
+          </span>
+        {% elif checkup.link_check.detected %}
+          <span class="checkup-status-tag warning">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 2. Banking Content Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">🏦</div>
+        <div>
+          <div class="checkup-label">Banking Content</div>
+          <div class="checkup-subtext">
+            {% if checkup.banking_check.detected %}
+              Referenced financial institutions / accounts: 
+              <strong>{{ checkup.banking_check.details | join(', ') }}</strong>
+            {% else %}
+              No banking or financial account references found
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.banking_check.detected %}
+          <span class="checkup-status-tag detected">
+            <span>✓</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> Not Detected
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 3. KYC Request Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">📄</div>
+        <div>
+          <div class="checkup-label">KYC Request</div>
+          <div class="checkup-subtext">
+            {% if checkup.kyc_check.detected %}
+              Contains verification mandate: 
+              <span style="color: var(--danger); font-weight: 600;">"{{ checkup.kyc_check.details | join(', ') }}"</span>
+            {% else %}
+              No Know-Your-Customer or account re-verification solicitations
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.kyc_check.detected %}
+          <span class="checkup-status-tag suspicious">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> Not Detected
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 4. Sensitive Information Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">🔐</div>
+        <div>
+          <div class="checkup-label">Sensitive Information</div>
+          <div class="checkup-subtext">
+            {% if checkup.sensitive_info_check.detected %}
+              Requests credential / security data: 
+              <span style="color: var(--danger); font-weight: 600;">"{{ checkup.sensitive_info_check.details | join(', ') }}"</span>
+            {% else %}
+              No requests for OTPs, PINs, passwords, or identity numbers detected
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.sensitive_info_check.detected %}
+          <span class="checkup-status-tag suspicious">
+            <span>⚠</span> Requested
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Detected
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 5. Urgency Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">⚡</div>
+        <div>
+          <div class="checkup-label">Urgency</div>
+          <div class="checkup-subtext">
+            {% if checkup.urgency_check.detected %}
+              Artificial panic or deadline cues: 
+              <span style="color: var(--warning-text); font-weight: 600;">"{{ checkup.urgency_check.details | join(', ') }}"</span>
+            {% else %}
+              Message maintains a neutral, non-coercive timeline
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.urgency_check.detected %}
+          <span class="checkup-status-tag warning">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> Normal Pace
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 6. UPI / Payment Information Check -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">💳</div>
+        <div>
+          <div class="checkup-label">UPI & Payment Information</div>
+          <div class="checkup-subtext">
+            {% if checkup.payment_upi_check.detected %}
+              Detected digital payment handles or solicitations: 
+              <strong>{{ checkup.payment_upi_check.details | join(', ') }}</strong>
+            {% else %}
+              No UPI handles, payment links, or money transfer requests identified
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.payment_upi_check.detected %}
+          <span class="checkup-status-tag warning">
+            <span>⚠</span> Detected
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 7. Phone Numbers Identified -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">📞</div>
+        <div>
+          <div class="checkup-label">Phone Numbers</div>
+          <div class="checkup-subtext">
+            {% if checkup.phone_check.detected %}
+              Extracted contact numbers: 
+              <code>{{ checkup.phone_check.detected_items | join(', ') }}</code>
+            {% else %}
+              No callback telephone numbers detected in body
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.phone_check.detected %}
+          <span class="checkup-status-tag detected">
+            <span>✓</span> Identified
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 8. Email Addresses Identified -->
+    <div class="checkup-row">
+      <div class="checkup-item-left">
+        <div class="checkup-emoji-icon">✉</div>
+        <div>
+          <div class="checkup-label">Email Addresses</div>
+          <div class="checkup-subtext">
+            {% if checkup.email_check.detected %}
+              Extracted email addresses: 
+              <code>{{ checkup.email_check.detected_items | join(', ') }}</code>
+            {% else %}
+              No email addresses found
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="checkup-status-box">
+        {% if checkup.email_check.detected %}
+          <span class="checkup-status-tag detected">
+            <span>✓</span> Identified
+          </span>
+        {% else %}
+          <span class="checkup-status-tag safe">
+            <span>✓</span> None Found
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Checkup Footer Actions -->
+  <div style="padding: 16px 20px; background-color: #F8FAFC; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div style="font-size: 13px; color: var(--text-secondary);">
+      Initial security checkup complete &bull; Proceed to generate the granular scam indicators report:
+    </div>
+    <form action="{{ url_for('indicators.analyze') }}" method="POST" style="margin: 0;">
+      <input type="hidden" name="text" value="{{ input_text }}">
+      <button type="submit" class="btn btn-primary btn-sm">
+        <span>View Scam Indicator Report</span>
+        <i data-lucide="arrow-right"></i>
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Sample button loader
+  document.querySelectorAll('.checkup-sample-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.getAttribute('data-text');
+      const textarea = document.getElementById('checkup_text_input');
+      if (textarea) {
+        textarea.value = text;
+        textarea.focus();
+      }
+    });
+  });
+
+  // Clear button
+  const clearBtn = document.getElementById('btn_clear_checkup');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const textarea = document.getElementById('checkup_text_input');
+      if (textarea) {
+        textarea.value = '';
+        textarea.focus();
+      }
+    });
+  }
+</script>
+{% endblock %}

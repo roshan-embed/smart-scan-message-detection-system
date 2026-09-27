@@ -1,24 +1,32 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
 
-node_modules
-dist
-dist-ssr
-*.local
+# Flask & Environment
+.env
+instance/
+.webassets-cache
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Database (optional local state)
+*.sqlite3-journal
+
+# Uploads
+app/static/uploads/screenshots/*
+!app/static/uploads/screenshots/.gitkeep
+
+# IDE & Editor files
+.idea/
+*.swp
+*.swo
+
+# Operating System
+Thumbs.db
+Desktop.ini
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?

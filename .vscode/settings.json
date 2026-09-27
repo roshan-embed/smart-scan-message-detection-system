@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "files.autoSave": "afterDelay",
+  "editor.tabSize": 4,
+  "html.format.indentInnerHtml": true
+}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Scan History &bull; {{ system_name }}{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div style="margin-bottom: 24px;">
+  <h1 style="font-size: 24px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.3px;">Scan History</h1>
+  <p style="font-size: 13.5px; color: var(--text-secondary); margin-top: 2px;">
+    View your past message scans and detection results.
+  </p>
+</div>
+
+<!-- Search & Filter Controls Row -->
+<form method="GET" action="{{ url_for('scanner.history') }}" class="history-controls-row">
+  <div class="search-input-wrapper">
+    <i data-lucide="search"></i>
+    <input 
+      type="text" 
+      name="q" 
+      class="search-input-field" 
+      placeholder="Search by message or keyword..." 
+      value="{{ search_query or '' }}"
+    >
+  </div>
+
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <select name="result" class="filter-select" onchange="this.form.submit()">
+      <option value="all" {% if filter_result == 'all' or not filter_result %}selected{% endif %}>All Results</option>
+      <option value="high risk" {% if filter_result == 'high risk' %}selected{% endif %}>High Risk</option>
+      <option value="suspicious" {% if filter_result == 'suspicious' %}selected{% endif %}>Suspicious</option>
+      <option value="safe" {% if filter_result == 'safe' %}selected{% endif %}>Safe</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    {% if search_query or (filter_result and filter_result != 'all') %}
+      <a href="{{ url_for('scanner.history') }}" class="btn btn-secondary btn-sm">Reset</a>
+    {% endif %}
+  </div>
+</form>
+
+<!-- Scan History Data Table Card -->
+<div class="history-card-table">
+  <table class="custom-data-table">
+    <thead>
+      <tr>
+        <th style="width: 170px;">Date &amp; Time</th>
+        <th>Message Preview</th>
+        <th style="width: 130px;">Result</th>
+        <th style="width: 110px; text-align: center;">Risk Score</th>
+        <th style="width: 80px; text-align: center;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in messages %}
+      <tr>
+        <td style="color: var(--text-secondary); font-size: 12.5px; white-space: nowrap;">
+          {{ m.created_at }}
+        </td>
+        <td>
+          <div style="font-weight: 500; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{ m.sanitized_content }}
+          </div>
+          {% if m.sender_info %}
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              Sender: <code>{{ m.sender_info }}</code>
+            </div>
+          {% endif %}
+        </td>
+        <td>
+          <span class="badge {{ m.status_class }}">
+            <i data-lucide="{{ m.status_icon }}" style="width: 12px; height: 12px;"></i>
+            <span>{{ m.status_label }}</span>
+          </span>
+        </td>
+        <td style="text-align: center;">
+          <span style="font-size: 15px; font-weight: 800; color: {% if m.status_label == 'High Risk' %}var(--danger){% elif m.status_label == 'Suspicious' %}var(--warning){% else %}var(--safe){% endif %};">
+            {{ m.parsed_risk_score }}
+          </span>
+        </td>
+        <td style="text-align: center;">
+          <a href="{{ url_for('scanner.analysis_detail', msg_id=m.id) }}" class="btn btn-secondary btn-sm" style="padding: 4px 8px;" title="View Analysis Result">
+            <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 36px;">
+          <i data-lucide="inbox" style="width: 32px; height: 32px; margin: 0 auto 8px; display: block; opacity: 0.4;"></i>
+          No message scan history found. Try scanning an SMS, WhatsApp message, or Email!
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Table Pagination Footer -->
+  <div class="table-pagination-footer">
+    <span>Showing 1-{{ messages | length }} of {{ messages | length }} results</span>
+    <div style="display: flex; gap: 6px;">
+      <button type="button" class="btn btn-secondary btn-sm" disabled style="opacity: 0.5;">&lt;</button>
+      <button type="button" class="btn btn-primary btn-sm" style="padding: 4px 10px;">1</button>
+      <button type="button" class="btn btn-secondary btn-sm" disabled style="opacity: 0.5;">&gt;</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

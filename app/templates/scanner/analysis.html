@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Result &bull; {{ system_name }}{% endblock %}
+
+{% block content %}
+<!-- Top Navigation Breadcrumb -->
+<div style="margin-bottom: 20px;">
+  <a href="{{ url_for('scanner.index') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+    <span>Back to Scan</span>
+  </a>
+</div>
+
+<!-- Header -->
+<div style="margin-bottom: 22px;">
+  <h1 style="font-size: 24px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.3px;">Analysis Result</h1>
+  <p style="font-size: 13.5px; color: var(--text-secondary); margin-top: 2px;">
+    AI-powered heuristic and neural network evaluation completed.
+  </p>
+</div>
+
+<!-- 1. Hero Risk Banner matching Mockup -->
+<div class="result-hero-box {% if assessment.risk_level == 'HIGH RISK' %}high-risk{% elif assessment.risk_level == 'SUSPICIOUS' %}suspicious{% else %}safe{% endif %}">
+  <div class="result-hero-left">
+    <div class="result-hero-icon-round {% if assessment.risk_level == 'HIGH RISK' %}danger{% elif assessment.risk_level == 'SUSPICIOUS' %}warning{% else %}safe{% endif %}">
+      {% if assessment.risk_level == 'HIGH RISK' %}
+        <i data-lucide="alert-octagon"></i>
+      {% elif assessment.risk_level == 'SUSPICIOUS' %}
+        <i data-lucide="alert-triangle"></i>
+      {% else %}
+        <i data-lucide="check-circle-2"></i>
+      {% endif %}
+    </div>
+
+    <div>
+      <div class="result-hero-title {% if assessment.risk_level == 'HIGH RISK' %}danger{% elif assessment.risk_level == 'SUSPICIOUS' %}warning{% else %}safe{% endif %}">
+        {{ assessment.risk_level }}
+      </div>
+      <div class="result-hero-sub">
+        {% if assessment.risk_level == 'HIGH RISK' %}
+          This message is likely a scam.
+        {% elif assessment.risk_level == 'SUSPICIOUS' %}
+          This message contains suspicious indicators. Exercise caution.
+        {% else %}
+          This message appears to be safe and legitimate.
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Circular Radial Score Badge (Mockup: 87 / Risk Score) -->
+  <div class="radial-score-badge {% if assessment.risk_level == 'HIGH RISK' %}danger{% elif assessment.risk_level == 'SUSPICIOUS' %}warning{% else %}safe{% endif %}">
+    <div class="radial-score-val">{{ assessment.final_risk_score }}</div>
+    <div class="radial-score-denom">/ 100</div>
+    <div class="radial-score-sub">Risk Score</div>
+  </div>
+</div>
+
+<!-- Main Contributing Factors Section (Module 6 Specification) -->
+{% if assessment.contributing_factors %}
+<div style="background-color: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: 20px 24px; margin-bottom: 22px; box-shadow: var(--shadow-card);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+    <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">
+      <i data-lucide="layers" style="color: var(--primary-teal); width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 6px;"></i>
+      Main Contributing Factors
+    </div>
+    <span style="font-size: 11.5px; color: var(--text-secondary);">Module 6: Detection Pipeline Inputs</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+    {% for cf in assessment.contributing_factors %}
+    <div style="background: {% if cf.triggered %}#FEF2F2{% else %}#F8FAFC{% endif %}; border: 1px solid {% if cf.triggered %}#FECACA{% else %}#E2E8F0{% endif %}; border-radius: 8px; padding: 12px 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ cf.factor }}</span>
+        <i data-lucide="{{ cf.icon }}" style="width: 14px; height: 14px; color: {% if cf.triggered %}#EF4444{% else %}#10B981{% endif %};"></i>
+      </div>
+      <div style="font-size: 16px; font-weight: 800; color: {% if cf.triggered %}#DC2626{% else %}#15803D{% endif %};">
+        {{ cf.value }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- 2. Detected Indicators Pills Section -->
+<div style="background-color: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: 20px 24px; margin-bottom: 22px; box-shadow: var(--shadow-card);">
+  <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+    Detected Indicators
+  </div>
+
+  <div class="indicator-pills-row">
+    {% if assessment.rule_breakdown %}
+      {% for factor in assessment.rule_breakdown %}
+      <div class="indicator-pill {% if factor.severity != 'critical' %}warning-pill{% endif %}">
+        <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i>
+        <span>{{ factor.label }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="badge badge-safe" style="font-size: 12px; padding: 6px 14px;">
+        <i data-lucide="check"></i>
+        <span>No malicious indicators detected</span>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 3. Side-by-Side Dual Engine Cards (AI Analysis & Rule Engine Score) -->
+<div class="dual-engine-grid">
+  <!-- AI Analysis Card -->
+  <div class="engine-card">
+    <div class="engine-icon-box ai">
+      <i data-lucide="cpu"></i>
+    </div>
+    <div class="engine-info">
+      <span class="engine-title">AI Analysis</span>
+      <span style="font-size: 11.5px; color: var(--text-secondary); margin-top: 1px;">Scam Probability</span>
+      <span class="engine-score-val" style="color: {% if assessment.ai_prediction == 'SCAM' %}var(--danger){% else %}var(--safe){% endif %};">
+        {{ assessment.ai_confidence }}%
+      </span>
+      <span class="engine-subtext">(Local DistilBERT Model)</span>
+    </div>
+  </div>
+
+  <!-- Rule Engine Score Card -->
+  <div class="engine-card">
+    <div class="engine-icon-box rule">
+      <i data-lucide="settings"></i>
+    </div>
+    <div class="engine-info">
+      <span class="engine-title">Rule Engine Score</span>
+      <span style="font-size: 11.5px; color: var(--text-secondary); margin-top: 1px;">Heuristic Signature Score</span>
+      <span class="engine-score-val" style="color: var(--primary-teal);">
+        {{ assessment.rule_based_score }} / 100
+      </span>
+      <span class="engine-subtext">(Based on detected patterns)</span>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Why was this flagged? Box -->
+<div class="info-narrative-card">
+  <div class="info-narrative-header">
+    <i data-lucide="lightbulb" style="color: #F59E0B; width: 18px; height: 18px;"></i>
+    <span>Why was this flagged?</span>
+  </div>
+  <p class="info-narrative-body">
+    {% if assessment.risk_level == 'HIGH RISK' %}
+      This message contains multiple scam indicators such as {% if assessment.rule_breakdown %}{{ assessment.rule_breakdown | map(attribute='label') | join(', ') | lower }}{% else %}coercive psychological urgency and deceptive links{% endif %}, which strongly match confirmed fraud patterns.
+    {% elif assessment.risk_level == 'SUSPICIOUS' %}
+      This message triggered warning signs such as unverified external references or financial terminology requiring manual verification before proceeding.
+    {% else %}
+      This message exhibits benign conversational and business language characteristics with zero deceptive links or fraud signatures.
+    {% endif %}
+  </p>
+</div>
+
+<!-- 5. Recommended Actions Box -->
+<div class="action-checklist-card">
+  <div class="action-checklist-header">
+    <i data-lucide="shield-check" style="color: var(--safe); width: 18px; height: 18px;"></i>
+    <span>Recommended Actions</span>
+  </div>
+
+  <ul class="action-checklist-items">
+    {% for rec in assessment.recommendations %}
+    <li class="action-checklist-item">
+      <i data-lucide="check-circle-2"></i>
+      <span>{{ rec }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Scanned Message Content Preview -->
+<div style="background-color: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: 20px 24px; box-shadow: var(--shadow-card);">
+  <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;">
+    Original Message Content:
+  </div>
+  <div style="background-color: #F8FAFC; border: 1px solid var(--border-light); border-radius: 6px; padding: 14px; font-size: 13.5px; color: var(--text-primary); font-family: var(--font-sans); line-height: 1.5; white-space: pre-wrap;">{{ msg.sanitized_content if msg else '' }}</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Smart Scam Detection (Flask)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [],
+      "jinja": true,
+      "justMyCode": true,
+      "env": {
+        "FLASK_ENV": "development",
+        "FLASK_DEBUG": "True",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "console": "integratedTerminal"
+    }
+  ]
+}

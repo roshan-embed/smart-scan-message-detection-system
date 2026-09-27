@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}AI Scam Classification &bull; {{ system_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/checkup.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-info">
+    <h1>AI Scam Classification 🤖</h1>
+    <p>Module 05 &bull; Use the local AI model to classify the message.</p>
+  </div>
+  <div class="page-header-actions">
+    <span class="badge badge-navy">Module 05: AI Classifier</span>
+    <span class="badge badge-safe"><i data-lucide="cpu"></i> Local DistilBERT Online</span>
+    <a href="{{ url_for('scanner.index') }}" class="btn btn-secondary btn-sm">
+      <i data-lucide="scan-text"></i>
+      <span>Scanner</span>
+    </a>
+  </div>
+</div>
+
+<!-- Input Form & Sample Selection Card -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h2 class="card-header-title">
+      <i data-lucide="brain-circuit"></i>
+      <span>Classify Message with Local Transformer Model</span>
+    </h2>
+    <span style="font-size: 13px; color: var(--text-secondary);">100% offline neural network inference &bull; No external AI API</span>
+  </div>
+
+  <div class="card-body">
+    <!-- Preset Samples Bar -->
+    <div class="sample-bar" style="margin-bottom: 16px;">
+      <span style="font-size: 13px; font-weight: 600; color: var(--secondary-slate);">Load Test Samples:</span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        {% for key, s in samples.items() %}
+        <button 
+          type="button" 
+          class="sample-btn ai-sample-btn" 
+          data-text="{{ s.text }}"
+        >
+          <i data-lucide="sparkles"></i>
+          <span>{{ s.title }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <form action="{{ url_for('ai.classify') }}" method="POST" id="ai_form">
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="ai_text_input" class="form-label">
+          Message Text <span class="required">*</span>
+        </label>
+        <div class="scanner-textarea-wrapper">
+          <textarea 
+            id="ai_text_input" 
+            name="text" 
+            class="scanner-textarea" 
+            rows="5"
+            placeholder="Paste raw SMS, WhatsApp, or Email message here for local DistilBERT classification..."
+            required
+          >{{ input_text if input_text else '' }}</textarea>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="font-size: 12px; color: var(--text-secondary);">
+          <i data-lucide="shield-check" style="width: 13px; height: 13px; vertical-align: middle; color: var(--safe);"></i>
+          Privacy Safe: All classification runs strictly on your machine via local DistilBERT weights.
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn_clear_ai">
+            <i data-lucide="rotate-ccw"></i>
+            <span>Clear</span>
+          </button>
+          <button type="submit" class="btn btn-primary" id="btn_run_ai">
+            <i data-lucide="cpu"></i>
+            <span>Run AI Classification</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Module 5: AI Analysis Card -->
+{% if analysis %}
+<div class="ai-card {% if analysis.prediction == 'SCAM' %}scam-predicted{% else %}safe-predicted{% endif %}" id="ai_results_card">
+  
+  <!-- Header -->
+  <div class="ai-header">
+    <div class="ai-title">
+      <span style="font-size: 18px;">🤖</span>
+      <span>{{ analysis.title }}</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span class="badge badge-navy">Architecture: {{ analysis.model_architecture | truncate(40) }}</span>
+      <span class="badge badge-safe"><i data-lucide="zap"></i> {{ analysis.latency_ms }} ms</span>
+    </div>
+  </div>
+
+  <!-- Body matching user's exact specification -->
+  <div class="ai-body">
+
+    <!-- Prediction Row -->
+    <div class="ai-prediction-row">
+      <span class="ai-prediction-label">Prediction:</span>
+      <span class="ai-prediction-value {% if analysis.prediction == 'SCAM' %}scam{% else %}safe{% endif %}">
+        {{ analysis.prediction }}
+      </span>
+      <span class="badge {{ analysis.prediction_class }}" style="font-size: 12px; margin-left: 8px;">
+        {% if analysis.prediction == 'SCAM' %}
+          <i data-lucide="alert-octagon"></i> High Threat Detected
+        {% else %}
+          <i data-lucide="check-circle-2"></i> Benign Content
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- Confidence Section -->
+    <div class="ai-confidence-box">
+      <div class="ai-confidence-label">Confidence</div>
+      
+      <!-- ASCII block representation requested by user -->
+      <div class="ai-ascii-bar">{{ analysis.confidence_bar }}</div>
+
+      <!-- Smooth Visual Progress Bar -->
+      <div class="ai-visual-progress">
+        <div 
+          class="ai-visual-fill {% if analysis.prediction == 'SCAM' %}scam{% else %}safe{% endif %}" 
+          style="width: {{ analysis.confidence_score }}%;"
+        ></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+        <span>Scale: 0% (Low Certainty)</span>
+        <span>Posterior Probability: <strong>{{ analysis.probabilities.scam if analysis.prediction == 'SCAM' else analysis.probabilities.safe }}</strong></span>
+        <span>100% (High Certainty)</span>
+      </div>
+    </div>
+
+    <!-- Model Attribution Section -->
+    <div class="ai-meta-row">
+      <div class="ai-meta-item">
+        <span class="ai-meta-label">Model:</span>
+        <span class="ai-meta-val">{{ analysis.model_name }}</span>
+      </div>
+
+      <div class="ai-meta-item">
+        <span class="ai-meta-label">Tokens Evaluated:</span>
+        <span class="ai-meta-val">{{ analysis.tokens_evaluated }} tokens</span>
+      </div>
+
+      <div class="ai-meta-item">
+        <span class="ai-meta-label">Inference Mode:</span>
+        <span class="badge badge-safe" style="font-size: 11px;">100% Offline / Local</span>
+      </div>
+    </div>
+
+    {% if analysis.attended_features %}
+    <div style="font-size: 12px; color: var(--text-secondary); padding-top: 8px;">
+      <span style="font-weight: 600; color: var(--secondary-slate);">Attended Semantic Features:</span>
+      {% for feat in analysis.attended_features %}
+        <code style="margin-left: 4px;">{{ feat }}</code>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Footer Actions -->
+  <div style="padding: 14px 20px; background-color: #F8FAFC; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div style="font-size: 13px; color: var(--text-secondary);">
+      AI Classification completed locally using <strong>{{ analysis.model_name }}</strong>.
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{{ url_for('checkup.index') }}" class="btn btn-secondary btn-sm">
+        <i data-lucide="shield-search"></i>
+        <span>Security Checkup</span>
+      </a>
+      <a href="{{ url_for('indicators.index') }}" class="btn btn-secondary btn-sm">
+        <i data-lucide="alert-octagon"></i>
+        <span>Scam Indicators</span>
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Sample buttons loader
+  document.querySelectorAll('.ai-sample-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.getAttribute('data-text');
+      const textarea = document.getElementById('ai_text_input');
+      if (textarea) {
+        textarea.value = text;
+        textarea.focus();
+      }
+    });
+  });
+
+  // Clear button
+  const clearBtn = document.getElementById('btn_clear_ai');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const textarea = document.getElementById('ai_text_input');
+      if (textarea) {
+        textarea.value = '';
+        textarea.focus();
+      }
+    });
+  }
+</script>
+{% endblock %}
