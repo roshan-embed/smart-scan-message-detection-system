@@ -300,3 +300,31 @@
   max-height: 180px;
   overflow-y: auto;
 }
+
+/* Responsive adjustments for scanner view */
+@media (max-width: 768px) {
+  .sample-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .sample-bar > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .scanner-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scanner-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .counter-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
