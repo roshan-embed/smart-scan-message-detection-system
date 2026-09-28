@@ -52,6 +52,16 @@ def create_app(config_class=Config):
     def login_shortcut():
         return redirect(url_for("auth.login"))
 
+    # Direct academic Black Book report viewer and print route
+    @app.route("/blackbook")
+    @app.route("/blackbook/")
+    def view_blackbook():
+        report_path = os.path.join(os.path.dirname(base_dir), "Black_Book_Report.html")
+        if os.path.exists(report_path):
+            with open(report_path, "r", encoding="utf-8") as f:
+                return f.read()
+        return "Black Book report file not found.", 404
+
     # Global template context processor
     @app.context_processor
     def inject_global_data():
