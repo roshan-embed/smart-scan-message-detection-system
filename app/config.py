@@ -18,8 +18,8 @@ class Config:
     SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
     
     # Database Configuration (MySQL / SQLite)
-    # When running in Vercel Serverless environment, default directly to SQLite
-    if os.getenv("VERCEL"):
+    # When running in Vercel or Render cloud environments, default directly to SQLite
+    if os.getenv("VERCEL") or os.getenv("RENDER"):
         DB_TYPE = "sqlite"
         ENABLE_SQLITE_FALLBACK = True
     else:

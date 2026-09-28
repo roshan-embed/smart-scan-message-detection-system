@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: smart-scam-detection
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: DB_TYPE
+        value: "sqlite"
+      - key: ENABLE_SQLITE_FALLBACK
+        value: "True"
